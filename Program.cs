@@ -21,7 +21,6 @@ namespace bot
             {
                 Console.WriteLine("Введите ваше имя...\r\n");
                 userName = Console.ReadLine();
-                
             }
             while (userName.Trim() == "");
             if (userName == "/exit") command = "/exit";
@@ -29,8 +28,13 @@ namespace bot
         }
         static void AddTask()
         {
-            Console.WriteLine(GetStringDependsOnUserName("Введите описание задачи...\r\n"));
-            taskList.Add(Console.ReadLine());
+            string taskName;
+            do
+            {
+                Console.WriteLine(GetStringDependsOnUserName("Введите описание задачи...\r\n"));
+                taskName = Console.ReadLine();
+            }
+            while (taskName.Trim() == "");
             Console.WriteLine("Задача добавлена.\r\n");
         }
         static void ShowTasks(string msg)
@@ -86,11 +90,7 @@ namespace bot
         }
         static void DoInfo()
         {
-            Console.WriteLine
-            (
-                (userName != "" ? userName + ", " : "") +
-                (userName != "" ? "в" : "В") + "ерсия — 0.0.0, дата создания — 03.06.2025\r\n"
-            );
+            Console.WriteLine(GetStringDependsOnUserName("Версия — 0.0.1, дата создания — 09.06.2025\r\n"));
         }
         static void DoEcho(string command)
         {
