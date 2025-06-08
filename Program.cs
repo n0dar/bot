@@ -35,6 +35,7 @@ namespace bot
                 taskName = Console.ReadLine();
             }
             while (taskName.Trim() == "");
+            taskList.Add(Console.ReadLine());
             Console.WriteLine("Задача добавлена.\r\n");
         }
         static void ShowTasks(string msg)
@@ -43,15 +44,9 @@ namespace bot
             {
                 uint i = 0;
                 Console.WriteLine(GetStringDependsOnUserName(msg));
-                foreach (string task in taskList)
-                {
-                    Console.WriteLine($"{++i} {task}");
-                }
+                foreach (string task in taskList) Console.WriteLine($"{++i} {task}");
             }
-            else
-            {
-                Console.WriteLine("Список задач пуст.");
-            }
+            else Console.WriteLine("Список задач пуст.");
             Console.WriteLine("\r\n");
         }
         static void RemoveTask()
