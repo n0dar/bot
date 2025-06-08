@@ -35,6 +35,7 @@ namespace bot
                 taskName = Console.ReadLine();
             }
             while (taskName.Trim() == "");
+            taskList.Add(taskName);
             Console.WriteLine("Задача добавлена.\r\n");
         }
         static void ShowTasks(string msg)
