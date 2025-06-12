@@ -19,7 +19,7 @@ namespace bot
                 (userName != "" ? userName + ", " : "") + 
                 (userName != "" ? char.ToLower(str[0]) : char.ToUpper(str[0])) + str[1..];
         }
-        static void DoStart()
+        static void Start()
         {
             do
             {
@@ -29,6 +29,7 @@ namespace bot
             while (userName.Trim() == "");
             if (userName == "/exit") command = "/exit";
             else Console.Clear();
+            isStarted = true;
         }
         static void AddTask()
         {
@@ -77,7 +78,7 @@ namespace bot
             }
             else Console.WriteLine("Список задач пуст.\r\n");
         }
-        static void DoHelp()
+        static void Help()
         {
             Console.WriteLine
             (
@@ -93,18 +94,18 @@ namespace bot
                 "Завершайте ввод нажатием на Enter\r\n"
             );
         }
-        static void DoInfo()
+        static void Info()
         {
             Console.WriteLine(GetStringDependsOnUserName("Версия — 0.0.1, дата создания — 09.06.2025\r\n"));
         }
-        static void DoEcho(string command)
+        static void Echo(string command)
         {
             Console.WriteLine(command.Replace("/echo ", "") + "\r\n");
         }
         static void Main()
         {
             Console.WriteLine("Привет! Я — бот. \r\n\r\n");
-            DoHelp();
+            Help();
 
             do
             {
@@ -113,12 +114,8 @@ namespace bot
                 switch (command)
                 {
                     case "/start":
-                        if (!isStarted)
-                        {
-                            DoStart();
-                            isStarted = true;
-                        }
-                        DoHelp();
+                        if (!isStarted) Start();
+                        Help();
                         break;
                     case "/addtask":
                         if (isStarted) AddTask();
@@ -130,14 +127,14 @@ namespace bot
                         if (isStarted) RemoveTask();
                         break;
                     case "/help":
-                        DoHelp();
+                        Help();
                         break;
                     case "/info":
-                        DoInfo();
+                        Info();
                         break;
                     default:
-                        if (command.StartsWith("/echo ") && command.Length>6) DoEcho(command);
-                        else DoHelp();
+                        if (command.StartsWith("/echo ") && command.Length>6) Echo(command);
+                        else Help();
                         break;
                 }
             }
