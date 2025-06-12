@@ -9,6 +9,10 @@ namespace bot
         private static string userName="";
         private static string command;
         private static List<string> taskList = [];
+        static string ReadLine()
+        {
+            return Console.ReadLine() ?? "";
+        }
         static string GetStringDependsOnUserName(string str)
         {
             return 
@@ -20,7 +24,7 @@ namespace bot
             do
             {
                 Console.WriteLine("Введите ваше имя...\r\n");
-                userName = Console.ReadLine();
+                userName = ReadLine();
             }
             while (userName.Trim() == "");
             if (userName == "/exit") command = "/exit";
@@ -32,7 +36,7 @@ namespace bot
             do
             {
                 Console.WriteLine(GetStringDependsOnUserName("Введите описание задачи...\r\n"));
-                taskName = Console.ReadLine();
+                taskName = ReadLine();
             }
             while (taskName.Trim() == "");
             taskList.Add(taskName);
@@ -60,7 +64,7 @@ namespace bot
             if (taskList.Count > 0)
             {
                 ShowTasks("Укажите номер задачи, которую хотите удалить:");
-                if (int.TryParse(Console.ReadLine(), out int taskNumber))
+                if (int.TryParse(ReadLine(), out int taskNumber))
                 {
                     if (taskNumber != 0 && taskNumber <= taskList.Count)
                     {
@@ -105,7 +109,7 @@ namespace bot
             do
             {
                 Console.WriteLine("Жду вашу команду...\r\n\r\n");
-                command = Console.ReadLine();
+                command = ReadLine();
                 switch (command)
                 {
                     case "/start":
