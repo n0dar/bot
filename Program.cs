@@ -1,25 +1,57 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Collections.Generic;
 
 namespace bot
 {
     class Program
     {
-        private static bool isStarted = false;
-        private static string userName="";
-        private static string command;
+        private const int           taskCountMax = 100;
+        private const int           taskLengthMax = 100;
+
+        private static bool         isStarted = false;
+        private static string       userName="";
+        private static string       command="";
         private static List<string> taskList = [];
-        static string ReadLine()
+        private static int          taskCountLimit;
+        private static int          taskLengthLimit;
+
+        private class TaskCountLimitException : Exception 
         {
-            return Console.ReadLine() ?? "";
+            public TaskCountLimitException(int taskCountLimit) : base($"Превышено максимальное количество задач равное {taskCountLimit}\r\n") {}
         }
-        static string GetStringDependsOnUserName(string str)
+        private class TaskLengthLimitException : Exception
+        {
+            public TaskLengthLimitException(int taskLength, int taskLengthLimit) : base($"Длина задачи {taskLength} превышает максимально допустимое значение {taskLengthLimit}") {}
+        }
+        private class DuplicateTaskException : Exception
+        {
+            public DuplicateTaskException(string task) : base($"Задача \"{task}\" уже существует") {}
+        }
+        private static int ParseAndValidateInt(string? str, int min, int max)
+        {
+            int.TryParse(str, out int res);
+            if (res < min || res > max) throw new ArgumentException($"Значение должно находиться в интервале [{min};{max}]");
+            return res;
+        }
+        private static void ValidateString(string? str)
+        {
+            if ((str ?? "").Trim()=="") throw new ArgumentException("Значение не может быть пустым");
+        }
+        private static string ReadLine() 
+        {
+            //return Console.ReadLine() ?? "";
+            string? res = Console.ReadLine();
+            ValidateString(res);
+            return res;
+        }
+        private static string GetStringDependsOnUserName(string str)
         {
             return 
                 (userName != "" ? userName + ", " : "") + 
                 (userName != "" ? char.ToLower(str[0]) : char.ToUpper(str[0])) + str[1..];
         }
-        static void Start()
+        private static void Start()
         {
             do
             {
@@ -31,19 +63,25 @@ namespace bot
             else Console.Clear();
             isStarted = true;
         }
-        static void AddTask()
+        private static void AddTask()
         {
+            if (taskList.Count == taskCountLimit) throw new TaskCountLimitException(taskCountLimit);
+            
             string taskName;
             do
             {
                 Console.WriteLine(GetStringDependsOnUserName("Введите описание задачи...\r\n"));
-                taskName = ReadLine();
+                taskName = ReadLine().Trim();
             }
-            while (taskName.Trim() == "");
+            while (taskName == "");
+
+            if (taskName.Length > taskLengthLimit) throw new TaskLengthLimitException(taskName.Length, taskLengthLimit);
+            if (taskList.Contains(taskName)) throw new DuplicateTaskException(taskName);
+
             taskList.Add(taskName);
             Console.WriteLine("Задача добавлена.\r\n");
         }
-        static void ShowTasks(string msg)
+        private static void ShowTasks(string msg)
         {
             if (taskList.Count > 0)
             {
@@ -60,7 +98,7 @@ namespace bot
             }
             Console.WriteLine("\r\n");
         }
-        static void RemoveTask()
+        private static void RemoveTask()
         {
             if (taskList.Count > 0)
             {
@@ -78,7 +116,7 @@ namespace bot
             }
             else Console.WriteLine("Список задач пуст.\r\n");
         }
-        static void Help()
+        private static void Help()
         {
             Console.WriteLine
             (
@@ -94,51 +132,83 @@ namespace bot
                 "Завершайте ввод нажатием на Enter\r\n"
             );
         }
-        static void Info()
+        private static void Info()
         {
-            Console.WriteLine(GetStringDependsOnUserName("Версия — 0.0.1, дата создания — 09.06.2025\r\n"));
+            Console.WriteLine(GetStringDependsOnUserName("Версия — 0.0.3, дата создания — 13.06.2025\r\n"));
         }
-        static void Echo(string command)
+        private static void Echo(string command)
         {
             Console.WriteLine(command.Replace("/echo ", "") + "\r\n");
         }
-        static void Main()
+        private static void Main()
         {
-            Console.WriteLine("Привет! Я — бот. \r\n\r\n");
-            Help();
-
-            do
+            try
             {
-                Console.WriteLine("Жду вашу команду...\r\n\r\n");
-                command = ReadLine();
-                switch (command)
+                Console.WriteLine("Привет! Я — бот. \r\n\r\n");
+
+                Console.WriteLine("Введите максимально допустимое количество задач...");
+                taskCountLimit = ParseAndValidateInt(ReadLine(), 1, taskCountMax);
+
+                Console.WriteLine("Введите максимально допустимую длину наименования задачи...");
+                taskLengthLimit = ParseAndValidateInt(ReadLine(), 1, taskLengthMax);
+
+                Help();
+
+                do
                 {
-                    case "/start":
-                        if (!isStarted) Start();
-                        Help();
-                        break;
-                    case "/addtask":
-                        if (isStarted) AddTask();
-                        break;
-                    case "/showtasks":
-                        if (isStarted) ShowTasks("Задачи в списке:");
-                        break;
-                    case "/removetask":
-                        if (isStarted) RemoveTask();
-                        break;
-                    case "/help":
-                        Help();
-                        break;
-                    case "/info":
-                        Info();
-                        break;
-                    default:
-                        if (command.StartsWith("/echo ") && command.Length>6) Echo(command);
-                        else Help();
-                        break;
+                    Console.WriteLine("Жду вашу команду...\r\n\r\n");
+                    command = ReadLine();
+                    switch (command)
+                    {
+                        case "/start":
+                            if (!isStarted) Start();
+                            Help();
+                            break;
+                        case "/addtask":
+                            if (isStarted) AddTask();
+                            break;
+                        case "/showtasks":
+                            if (isStarted) ShowTasks("Задачи в списке:");
+                            break;
+                        case "/removetask":
+                            if (isStarted) RemoveTask();
+                            break;
+                        case "/help":
+                            Help();
+                            break;
+                        case "/info":
+                            Info();
+                            break;
+                        default:
+                            if (command.StartsWith("/echo ") && command.Length > 6) Echo(command);
+                            else Help();
+                            break;
+                    }
                 }
+                while (command != "/exit");
             }
-            while (command != "/exit");
+            catch (Exception ex) 
+            when 
+            (
+                ex is ArgumentException || 
+                ex is TaskCountLimitException || 
+                ex is TaskLengthLimitException  || 
+                ex is DuplicateTaskException
+            )
+            {
+                Console.WriteLine($"{ex.Message}\r\n");
+            }
+            catch (Exception ex)  
+            {
+                Console.WriteLine
+                (
+                    $"Произошла непредвиденная ошибка:\r\n" +
+                    $"{ex.GetType().FullName}\r\n" +
+                    $"{ex.Message}\r\n" +
+                    $"{ex.StackTrace}\r\n" +
+                    $"{ex.InnerException}\r\n"
+                );
+            }
         }
     }
 }
