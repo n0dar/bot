@@ -17,19 +17,6 @@ namespace bot
 
         private static ToDoUser? toDoUser;
         private static List<ToDoItem> toDoItemList = [];
-
-        private class TaskCountLimitException : Exception 
-        {
-            public TaskCountLimitException(int taskCountLimit) : base($"Превышено максимальное количество задач равное {taskCountLimit}\r\n") {}
-        }
-        private class TaskLengthLimitException : Exception
-        {
-            public TaskLengthLimitException(int taskLength, int taskLengthLimit) : base($"Длина задачи {taskLength} превышает максимально допустимое значение {taskLengthLimit}") {}
-        }
-        private class DuplicateTaskException : Exception
-        {
-            public DuplicateTaskException(string task) : base($"Задача \"{task}\" уже существует") {}
-        }
         private static int ParseAndValidateInt(string? str, int min, int max)
         {
             int.TryParse(str, out int res);
@@ -86,9 +73,9 @@ namespace bot
             if (toDoItemList.Exists(item => item.State == ToDoItemState.Active))
             {
                 Console.WriteLine(GetStringDependsOnUserName(msg));
-                foreach (ToDoItem item in toDoItemList)
+                foreach (ToDoItem item in toDoItemList.FindAll(item => item.State == ToDoItemState.Active))
                 {
-                    if (item.State == ToDoItemState.Active) Console.WriteLine($"{item.Name} - {item.CreatedAt} - {item.Id}");
+                    Console.WriteLine($"{item.Name} - {item.CreatedAt} - {item.Id}");
                 }
             }
             else Console.WriteLine("Список активных задач пуст.\r\n");
@@ -129,9 +116,11 @@ namespace bot
             {
                 ShowTasks("Укажите Id активной задачи, которую необходимо завершить:");
                 string id = ReadLine();
-                if (toDoItemList.Exists(item => item.Id.ToString() == id && item.State==ToDoItemState.Active))
+                ToDoItem? ToDoItem = toDoItemList.Find(item => item.Id.ToString() == id && item.State == ToDoItemState.Active);
+                if (ToDoItem != null)
                 {
-                    toDoItemList.Find(item => item.Id.ToString() == id).State = ToDoItemState.Completed;
+                    ToDoItem.State = ToDoItemState.Completed;
+                    ToDoItem.StateChangedAt = DateTime.UtcNow;
                     Console.WriteLine("Задача завершена.\r\n");
                 }
                 else Console.WriteLine("Активная задача с таким Id не существует.\r\n");
