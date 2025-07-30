@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using static bot.ToDoItem;
 
 namespace bot
 {
@@ -10,49 +11,32 @@ namespace bot
         private const int           taskLengthMax = 100;
 
         private static bool         isStarted = false;
-        private static string       userName="";
-        private static string       command="";
-        private static List<string> taskList = [];
+        private static string       command = "";
         private static int          taskCountLimit;
         private static int          taskLengthLimit;
 
-        private class TaskCountLimitException : Exception 
-        {
-            public TaskCountLimitException(int taskCountLimit) : base($"Превышено максимальное количество задач равное {taskCountLimit}\r\n") {}
-        }
-        private class TaskLengthLimitException : Exception
-        {
-            public TaskLengthLimitException(int taskLength, int taskLengthLimit) : base($"Длина задачи {taskLength} превышает максимально допустимое значение {taskLengthLimit}") {}
-        }
-        private class DuplicateTaskException : Exception
-        {
-            public DuplicateTaskException(string task) : base($"Задача \"{task}\" уже существует") {}
-        }
+        private static ToDoUser? toDoUser;
+        private static List<ToDoItem> toDoItemList = [];
         private static int ParseAndValidateInt(string? str, int min, int max)
         {
             int.TryParse(str, out int res);
             if (res < min || res > max) throw new ArgumentException($"Значение должно находиться в интервале [{min};{max}]");
             return res;
         }
-        private static void ValidateString(string? str)
-        {
-            if ((str ?? "").Trim()=="") throw new ArgumentException("Значение не может быть пустым");
-        }
         private static string ReadLine() 
         {
-            //return Console.ReadLine() ?? "";
             string? res = Console.ReadLine();
-            ValidateString(res);
+            if ((res ?? "").Trim() == "") throw new ArgumentException("Значение не может быть пустым");
             return res;
         }
         private static string GetStringDependsOnUserName(string str)
         {
-            return 
-                (userName != "" ? userName + ", " : "") + 
-                (userName != "" ? char.ToLower(str[0]) : char.ToUpper(str[0])) + str[1..];
+            if (toDoUser is null || toDoUser.TelegramUserName=="") return char.ToUpper(str[0]) + str[1..];
+            return toDoUser.TelegramUserName + ", " + char.ToLower(str[0]) + str[1..];
         }
         private static void Start()
         {
+            string userName;
             do
             {
                 Console.WriteLine("Введите ваше имя...\r\n");
@@ -60,13 +44,17 @@ namespace bot
             }
             while (userName.Trim() == "");
             if (userName == "/exit") command = "/exit";
-            else Console.Clear();
-            isStarted = true;
+            else
+            {
+                Console.Clear();
+                isStarted = true;
+                toDoUser = new(userName);
+            }
         }
         private static void AddTask()
         {
-            if (taskList.Count == taskCountLimit) throw new TaskCountLimitException(taskCountLimit);
-            
+            if (toDoItemList.Count == taskCountLimit) throw new TaskCountLimitException(taskCountLimit);
+
             string taskName;
             do
             {
@@ -76,38 +64,44 @@ namespace bot
             while (taskName == "");
 
             if (taskName.Length > taskLengthLimit) throw new TaskLengthLimitException(taskName.Length, taskLengthLimit);
-            if (taskList.Contains(taskName)) throw new DuplicateTaskException(taskName);
-
-            taskList.Add(taskName);
+            if (toDoItemList.Exists(item => item.Name == taskName)) throw new DuplicateTaskException(taskName);
+            toDoItemList.Add(new(toDoUser, taskName));
             Console.WriteLine("Задача добавлена.\r\n");
         }
         private static void ShowTasks(string msg)
         {
-            if (taskList.Count > 0)
+            if (toDoItemList.Exists(item => item.State == ToDoItemState.Active))
             {
-                uint i = 0;
                 Console.WriteLine(GetStringDependsOnUserName(msg));
-                foreach (string task in taskList)
+                foreach (ToDoItem item in toDoItemList.FindAll(item => item.State == ToDoItemState.Active))
                 {
-                    Console.WriteLine($"{++i} {task}");
+                    Console.WriteLine($"{item.Name} - {item.CreatedAt} - {item.Id}");
                 }
             }
-            else
+            else Console.WriteLine("Список активных задач пуст.\r\n");
+        }
+        private static void ShowAllTasks(string msg)
+        {
+            if (toDoItemList.Count > 0)
             {
-                Console.WriteLine("Список задач пуст.");
+                Console.WriteLine(GetStringDependsOnUserName(msg));
+                foreach (ToDoItem item in toDoItemList)
+                {
+                    Console.WriteLine($"({item.State}) {item.Name} - {item.CreatedAt} - {item.Id}");
+                }
             }
-            Console.WriteLine("\r\n");
+            else Console.WriteLine("Список задач пуст.\r\n");
         }
         private static void RemoveTask()
         {
-            if (taskList.Count > 0)
+            if (toDoItemList.Count > 0)
             {
-                ShowTasks("Укажите номер задачи, которую хотите удалить:");
+                ShowAllTasks("Укажите порядковый номер задачи, которую необходимо удалить:");
                 if (int.TryParse(ReadLine(), out int taskNumber))
                 {
-                    if (taskNumber != 0 && taskNumber <= taskList.Count)
+                    if (taskNumber != 0 && taskNumber <= toDoItemList.Count)
                     {
-                        taskList.RemoveAt(--taskNumber);
+                        toDoItemList.RemoveAt(--taskNumber);
                         Console.WriteLine("Задача удалена.\r\n");
                     }
                     else Console.WriteLine("Задача с таким номером не существует.\r\n");
@@ -116,19 +110,38 @@ namespace bot
             }
             else Console.WriteLine("Список задач пуст.\r\n");
         }
+        private static void CompleteTask()
+        {
+            if (toDoItemList.Exists(item => item.State == ToDoItemState.Active))
+            {
+                ShowTasks("Укажите Id активной задачи, которую необходимо завершить:");
+                string id = ReadLine();
+                ToDoItem? ToDoItem = toDoItemList.Find(item => item.Id.ToString() == id && item.State == ToDoItemState.Active);
+                if (ToDoItem != null)
+                {
+                    ToDoItem.State = ToDoItemState.Completed;
+                    ToDoItem.StateChangedAt = DateTime.UtcNow;
+                    Console.WriteLine("Задача завершена.\r\n");
+                }
+                else Console.WriteLine("Активная задача с таким Id не существует.\r\n");
+            }
+            else Console.WriteLine("В списке задач нет активных задач\r\n");
+        }
         private static void Help()
         {
             Console.WriteLine
             (
                 GetStringDependsOnUserName("Для взаимодействия со мной вам доступен следующий список команд:\r\n\r\n") +
-                (isStarted ? "" : "/start      — начните работу с этой команды" + ";\r\n")  +
-                (isStarted ?      "/addtask    — добавлю задачу в список" + ";\r\n" : "") +
-                (isStarted ?      "/showtasks  — покажу список задач" + ";\r\n" : "") +
-                (isStarted ?      "/removetask — удалю задачу из списка" + ";\r\n" : "") +
-                (isStarted ?      "/echo       — отображу введенную вами строку текста, указанную после команды через пробел" + ";\r\n" : "")  +
-                                  "/help       — покажу справочную информацию;\r\n" +
-                                  "/info       — покажу свои версию и дату создания;\r\n" +
-                                  "/exit       — завершу работу.\r\n" +
+                (isStarted ? "" : "/start        — начните работу с этой команды;\r\n")  +
+                (isStarted ?      "/addtask      — добавлю задачу в список;\r\n" : "") +
+                (isStarted ?      "/showalltasks — покажу список всех задач;\r\n" : "") +
+                (isStarted ?      "/showtasks    — покажу список активных задач;\r\n" : "") +
+                (isStarted ?      "/removetask   — удалю задачу из списка;\r\n" : "") +
+                (isStarted ?      "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\";\r\n" : "") +
+                (isStarted ?      "/echo         — отображу введенную вами строку текста, указанную после команды через пробел;\r\n" : "")  +
+                                  "/help         — покажу справочную информацию;\r\n" +
+                                  "/info         — покажу свои версию и дату создания;\r\n" +
+                                  "/exit         — завершу работу.\r\n" +
                 "Завершайте ввод нажатием на Enter\r\n"
             );
         }
@@ -167,11 +180,17 @@ namespace bot
                         case "/addtask":
                             if (isStarted) AddTask();
                             break;
+                        case "/showalltasks":
+                            if (isStarted) ShowAllTasks("Список задач:");
+                            break;
                         case "/showtasks":
-                            if (isStarted) ShowTasks("Задачи в списке:");
+                            if (isStarted) ShowTasks("Список активных задач:");
                             break;
                         case "/removetask":
                             if (isStarted) RemoveTask();
+                            break;
+                        case "/completetask":
+                            if (isStarted) CompleteTask();
                             break;
                         case "/help":
                             Help();
