@@ -5,4 +5,8 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="Z:\Documents\OTUS\C-Sharp-Basic\Homeworks\05.2 ООП интерфейсы\Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj" />
+  </ItemGroup>
+
 </Project>
