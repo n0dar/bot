@@ -7,22 +7,29 @@ using System.Text;
 
 namespace bot
 {
-    internal class UpdateHandler: IUpdateHandler
+    internal class UpdateHandler(IUserService UserService, IToDoService ToDoService) : IUpdateHandler
     {
-        private readonly IUserService _IUserService;
-        private readonly IToDoService _IToDoService;
-
-        private static string ReadLine()
+        private readonly IUserService _userService = UserService;
+        private readonly IToDoService _toDoService = ToDoService;
+        private static string GetMessageForShowCommands(IReadOnlyList<ToDoItem> toDoItemList, string command)
         {
-            string? res = Console.ReadLine();
-            if ((res ?? "").Trim() == "") throw new ArgumentException("Значение не может быть пустым");
-            return res;
+            StringBuilder message = new();
+            if (toDoItemList.Count > 0)
+            {
+                message.AppendLine($"Список{(command == "/showtasks" ? " активных " : " ")}задач:");
+                foreach (ToDoItem item in toDoItemList)
+                {
+                    message.AppendLine(item.ToString());
+                }
+            }
+            else message.AppendLine($"Список{(command == "/showtasks" ? " активных " : " ")}задач пуст"); 
+            return message.ToString();
         }
         private void Start(ITelegramBotClient botClient, Update update)
         {
-            if (_IUserService.GetUser(update.Message.From.Id) is null)
+            if (_userService.GetUser(update.Message.From.Id) is null)
             {
-                _IUserService.RegisterUser(update.Message.From.Id, update.Message.From.Username);
+                _userService.RegisterUser(update.Message.From.Id, update.Message.From.Username);
             }
         }
         private void Help(ITelegramBotClient botClient, Update update)
@@ -31,12 +38,13 @@ namespace bot
             (
                 update.Message.Chat,
                                                                                 "Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
-                ((_IUserService.GetUser(update.Message.From.Id) != null) ? "" : "/start        — начните работу с этой команды;\r\n") +
-                ((_IUserService.GetUser(update.Message.From.Id) == null) ? "" : "/addtask      — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
-                                                                                "/showalltasks — покажу список всех задач;\r\n"  +
-                                                                                "/showtasks    — покажу список активных задач;\r\n"  +
+                ((_userService.GetUser(update.Message.From.Id) != null) ?       "/addtask      — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
+                                                                                "/showalltasks — покажу список всех задач;\r\n" +
+                                                                                "/showtasks    — покажу список активных задач;\r\n" +
                                                                                 "/removetask   — удалю задачу из списка (укажите ее GUID через пробел);\r\n" +
-                                                                                "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n"
+                                                                                "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n" 
+                                                                                :
+                                                                                "/start        — начните работу с этой команды;\r\n"
                 ) +
                                                                                 "/help         — покажу справочную информацию;\r\n" +
                                                                                 "/info         — покажу свои версию и дату создания;\r\n" +
@@ -44,33 +52,14 @@ namespace bot
                                                                                 "Ctrl + C      — завершу работу"
             );
         }
-        private void Info(ITelegramBotClient botClient, Update update)
+        private static void Info(ITelegramBotClient botClient, Update update)
         {
             botClient.SendMessage(update.Message.Chat, "Версия — 0.0.4, дата создания — 11.08.2025");
-        }
-        public UpdateHandler(IUserService UserService, IToDoService ToDoService)
-        {
-            _IUserService = UserService;
-            _IToDoService = ToDoService;
         }
         public void HandleUpdateAsync(ITelegramBotClient botClient, Update update)
         {
             try
             {
-                if (_IToDoService.TaskCountLimit == 0)
-                {
-                    botClient.SendMessage(update.Message.Chat, "Привет! Я — бот.\r\nВведите максимально допустимое количество задач...");
-                    _ = int.TryParse(ReadLine(), out int res);
-                    _IToDoService.TaskCountLimit = res;
-                }
-
-                if (_IToDoService.TaskLengthLimit == 0)
-                {
-                    botClient.SendMessage(update.Message.Chat, "Введите максимально допустимую длину наименования задачи...");
-                    _ = int.TryParse(ReadLine(), out int res);
-                    _IToDoService.TaskLengthLimit = res;
-                }
-
                 string command = update.Message.Text.Trim();
                 string? commandParam = null;
                 int spaceIndex = command.IndexOf(' ');
@@ -80,11 +69,9 @@ namespace bot
                     command = command.Substring(0, spaceIndex);
                 }
 
-                ToDoUser? toDoUser = _IUserService.GetUser(update.Message.From.Id);
-                IReadOnlyList<ToDoItem> toDoItemList;
+                ToDoUser? toDoUser = _userService.GetUser(update.Message.From.Id);
                 Guid taskId;
-                StringBuilder message = new();
-
+                
                 switch (command)
                 {
                     case "/start" when toDoUser == null:
@@ -92,41 +79,19 @@ namespace bot
                         Help(botClient, update);
                         break;
                     case "/addtask" when toDoUser != null && commandParam != null:
-                        _IToDoService.Add(toDoUser, commandParam);
+                        _toDoService.Add(toDoUser, commandParam);
                         botClient.SendMessage(update.Message.Chat, "Задача добавлена");
                         break;
                     case "/showalltasks" when toDoUser != null:
-                        toDoItemList = _IToDoService.GetAllByUserId(toDoUser.TelegramUserId);
-                        if (toDoItemList.Count > 0)
-                        {
-                            message.Clear();
-                            message.AppendLine("Список задач:");
-                            foreach (ToDoItem item in toDoItemList)
-                            {
-                                message.AppendLine($"({item.State}) {item.Name} - {item.CreatedAt} - {item.Id}");
-                            }
-                            botClient.SendMessage(update.Message.Chat, message.ToString());
-                        }
-                        else botClient.SendMessage(update.Message.Chat, "Список задач пуст");
+                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetAllByUserId(toDoUser.TelegramUserId), command));
                         break;
                     case "/showtasks" when toDoUser != null:
-                        toDoItemList = _IToDoService.GetActiveByUserId(toDoUser.TelegramUserId);
-                        if (toDoItemList.Count > 0)
-                        {
-                            message.Clear();
-                            message.AppendLine("Список активных задач:"); 
-                            foreach (ToDoItem item in toDoItemList)
-                            {
-                                message.AppendLine($"({item.State}) {item.Name} - {item.CreatedAt} - {item.Id}");
-                            }
-                            botClient.SendMessage(update.Message.Chat, message.ToString());
-                        }
-                        else botClient.SendMessage(update.Message.Chat, "Список активных задач пуст");
+                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetActiveByUserId(toDoUser.TelegramUserId), command));
                         break;
                     case "/removetask" when toDoUser != null && commandParam != null:
                         if (Guid.TryParse(commandParam, out taskId))
                         {
-                            _IToDoService.Delete(taskId);
+                            _toDoService.Delete(taskId);
                             botClient.SendMessage(update.Message.Chat, "Задача удалена");
                         }
                         else botClient.SendMessage(update.Message.Chat, "Некорректный идентификатор задачи");
@@ -134,7 +99,7 @@ namespace bot
                     case "/completetask" when toDoUser != null && commandParam != null:
                         if (Guid.TryParse(commandParam, out taskId))
                         {
-                            _IToDoService.MarkCompleted(taskId);
+                            _toDoService.MarkCompleted(taskId);
                             botClient.SendMessage(update.Message.Chat, "Задача завершена");
                         }
                         else botClient.SendMessage(update.Message.Chat, "Некорректный идентификатор задачи");

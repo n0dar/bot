@@ -2,5 +2,5 @@
 
 namespace bot
 {
-    public class TaskCountLimitException(int taskCountLimit) : Exception($"Превышено максимальное количество задач равное {taskCountLimit}\r\n");
+    public class TaskCountLimitException(int TaskCountLimit) : Exception($"Превышено максимальное количество задач равное {TaskCountLimit}\r\n");
 }

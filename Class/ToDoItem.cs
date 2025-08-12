@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Otus.ToDoList.ConsoleBot.Types;
+using System;
 
 namespace bot
 {
@@ -15,5 +16,9 @@ namespace bot
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ToDoItemState State { get; set; } = ToDoItemState.Active;
         public DateTime? StateChangedAt { get;set; }
+        public override string ToString()
+        {
+            return $"({State}) {Name} - {CreatedAt} - {Id}";
+        }
     }
 }

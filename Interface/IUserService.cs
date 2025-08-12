@@ -1,4 +1,5 @@
-﻿namespace bot
+﻿#nullable enable
+namespace bot
 {
     internal interface IUserService
     {

@@ -1,18 +1,19 @@
-﻿namespace bot
+﻿using System.Collections.Generic;
+
+namespace bot
 {
     internal class UserService : IUserService
     {
-        private ToDoUser? _toDoUser;
-
+        private readonly List<ToDoUser> _toDoUserList = [];
         ToDoUser IUserService.GetUser(long telegramUserId)
         {
-            if (_toDoUser is not null && _toDoUser.TelegramUserId== telegramUserId)  return _toDoUser;
-            return null;
+            return _toDoUserList.Find(x => x.TelegramUserId == telegramUserId);
         }
         ToDoUser IUserService.RegisterUser(long telegramUserId, string telegramUserName)
         {
-            _toDoUser = new ToDoUser(telegramUserId, telegramUserName);
-            return _toDoUser;
+            ToDoUser toDoUser = new(telegramUserId, telegramUserName);
+            _toDoUserList.Add (toDoUser);
+            return toDoUser;
         }
     }
 }

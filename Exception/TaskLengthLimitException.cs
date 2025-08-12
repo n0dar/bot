@@ -2,5 +2,5 @@
 
 namespace bot
 {
-    public class TaskLengthLimitException(int taskLength, int taskLengthLimit) : Exception($"Длина задачи {taskLength} превышает максимально допустимое значение {taskLengthLimit}");
+    public class TaskLengthLimitException(int taskLength, int TaskLengthLimit) : Exception($"Длина задачи {taskLength} превышает максимально допустимое значение {TaskLengthLimit}");
 }

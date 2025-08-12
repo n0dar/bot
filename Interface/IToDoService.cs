@@ -5,8 +5,6 @@ namespace bot
 {
     internal interface IToDoService
     {
-        public int TaskCountLimit { get; set; }
-        public int TaskLengthLimit { get; set; }
         IReadOnlyList<ToDoItem> GetAllByUserId(long userId);
         //Возвращает ToDoItem для UserId со статусом Active
         IReadOnlyList<ToDoItem> GetActiveByUserId(long userId);
