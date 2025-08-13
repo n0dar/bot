@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace bot
+namespace bot.Core.Exceptions
 {
     internal class TaskDoesNotExistException(string description) : Exception(description);
 }

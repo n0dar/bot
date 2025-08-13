@@ -1,5 +1,11 @@
 ﻿#nullable enable
-namespace bot
+using bot;
+
+
+#nullable enable
+using bot.Core.Entities;
+
+namespace bot.Core.Services.Interfaces
 {
     internal interface IUserService
     {

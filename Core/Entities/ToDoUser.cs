@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace bot
+namespace bot.Core.Entities
 {
     internal class ToDoUser(long telegramUserId, string telegramUserName)
     {

@@ -1,4 +1,7 @@
 ﻿#nullable enable
+using bot.Core.Entities;
+using bot.Core.Exceptions;
+using bot.Core.Services.Interfaces;
 using Otus.ToDoList.ConsoleBot;
 using Otus.ToDoList.ConsoleBot.Types;
 using System;
@@ -54,7 +57,7 @@ namespace bot
         }
         private static void Info(ITelegramBotClient botClient, Update update)
         {
-            botClient.SendMessage(update.Message.Chat, "Версия — 0.0.4, дата создания — 11.08.2025");
+            botClient.SendMessage(update.Message.Chat, "Версия — 0.0.5, дата создания — 14.08.2025");
         }
         public void HandleUpdateAsync(ITelegramBotClient botClient, Update update)
         {

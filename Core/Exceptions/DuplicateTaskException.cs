@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace bot
+namespace bot.Core.Exceptions
 {
     public class DuplicateTaskException(string task) : Exception($"Задача \"{task}\" уже существует");
 }

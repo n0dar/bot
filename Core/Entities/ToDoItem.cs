@@ -1,7 +1,7 @@
 ﻿using Otus.ToDoList.ConsoleBot.Types;
 using System;
 
-namespace bot
+namespace bot.Core.Entities
 {
     internal class ToDoItem(ToDoUser user, string name)
     {

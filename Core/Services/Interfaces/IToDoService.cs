@@ -1,7 +1,8 @@
-﻿using System;
+﻿using bot.Core.Entities;
+using System;
 using System.Collections.Generic;
 
-namespace bot
+namespace bot.Core.Services.Interfaces   
 {
     internal interface IToDoService
     {
