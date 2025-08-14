@@ -29,6 +29,12 @@ namespace bot.Core.Services.Classes
         {
             _toDoRepository.Delete(id);
         }
+
+        public IReadOnlyList<ToDoItem> Find(ToDoUser user, string namePrefix)
+        {
+            return _toDoRepository.Find(user.UserId, x => x.Name.StartsWith(namePrefix));
+        }
+
         public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
         {
             return _toDoRepository.GetActiveByUserId(userId);

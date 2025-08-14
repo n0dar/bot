@@ -18,5 +18,7 @@ namespace bot.Core.DataAccess
         bool ExistsByName(Guid userId, string name);
         //Возвращает количество активных задач у пользователя
         int CountActive(Guid userId);
+        //Возвращает все задачи пользователя, которые удовлетворяют предикату
+        IReadOnlyList<ToDoItem> Find(Guid userId, Func<ToDoItem, bool> predicate);
     }
 }

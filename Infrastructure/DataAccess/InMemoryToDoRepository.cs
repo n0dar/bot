@@ -27,6 +27,13 @@ namespace bot.Infrastructure.DataAccess
         {
             return _toDoItemList.Exists(x => x.User.UserId == userId && x.Name == name);
         }
+
+        public IReadOnlyList<ToDoItem> Find(Guid userId, Func<ToDoItem, bool> predicate)
+        {
+            //throw new NotImplementedException();
+            return _toDoItemList.FindAll(x => x.User.UserId == userId && predicate(x));
+        }
+
         public ToDoItem Get(Guid id)
         {
             return _toDoItemList.Find(x => x.Id == id);

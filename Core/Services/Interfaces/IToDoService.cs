@@ -12,5 +12,7 @@ namespace bot.Core.Services.Interfaces
         ToDoItem Add(ToDoUser user, string name);
         void MarkCompleted(Guid id);
         void Delete(Guid id);
+        //Возвращает все задачи пользователя, которые начинаются на namePrefix
+        IReadOnlyList<ToDoItem> Find(ToDoUser user, string namePrefix);
     }
 }

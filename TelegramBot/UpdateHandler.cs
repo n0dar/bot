@@ -54,6 +54,7 @@ namespace bot
                                                                                 "/addtask      — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
                                                                                 "/showalltasks — покажу список всех задач;\r\n" +
                                                                                 "/showtasks    — покажу список активных задач;\r\n" +
+                                                                                "/find         — покажу список актичных задач, начинающихся с префиса (укажите префикс через пробел);\r\n" +
                                                                                 "/removetask   — удалю задачу из списка (укажите ее GUID через пробел);\r\n" +
                                                                                 "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n"  +
                                                                                 "/report       — покажу статистику по задачам;\r\n"
@@ -99,6 +100,9 @@ namespace bot
                         break;
                     case "/showtasks" when toDoUser != null:
                         botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetActiveByUserId(toDoUser.UserId), command));
+                        break;
+                    case "/find" when toDoUser != null && commandParam != null:
+                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.Find(toDoUser, commandParam), "/showtasks"));
                         break;
                     case "/removetask" when toDoUser != null && commandParam != null:
                         if (Guid.TryParse(commandParam, out taskId))
