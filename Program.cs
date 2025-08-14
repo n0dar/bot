@@ -1,6 +1,7 @@
 ﻿using bot.Core.DataAccess;
 using bot.Core.Services;
 using bot.Core.Services.Classes;
+using bot.Core.Services.Interfaces;
 using bot.Infrastructure.DataAccess;
 using Otus.ToDoList.ConsoleBot;
 using System;
@@ -14,7 +15,8 @@ namespace bot
             try
             {
                 ConsoleBotClient botClient = new();
-                botClient.StartReceiving(new UpdateHandler(new UserService(new InMemoryUserRepository()), new ToDoService(new InMemoryToDoRepository())));
+                ToDoService toDoService = new(new InMemoryToDoRepository());
+                botClient.StartReceiving(new UpdateHandler(new UserService(new InMemoryUserRepository()), toDoService, new ToDoReportService(toDoService)));
             }
             catch (Exception ex)
             {

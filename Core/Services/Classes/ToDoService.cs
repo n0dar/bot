@@ -18,9 +18,9 @@ namespace bot.Core.Services.Classes
         
         public ToDoItem Add(ToDoUser user, string name)
         {
-            if (_toDoRepository.CountActive(user.TelegramUserId) == _TaskCountLimit) throw new TaskCountLimitException(_TaskCountLimit);
+            if (_toDoRepository.CountActive(user.UserId) == _TaskCountLimit) throw new TaskCountLimitException(_TaskCountLimit);
             if (name.Length > _TaskLengthLimit) throw new TaskLengthLimitException(name.Length, _TaskLengthLimit);
-            if (_toDoRepository.ExistsByName(user.TelegramUserId, name)) throw new DuplicateTaskException(name);
+            if (_toDoRepository.ExistsByName(user.UserId, name)) throw new DuplicateTaskException(name);
             ToDoItem ToDoItem = new(user, name);
             _toDoRepository.Add(ToDoItem);
             return ToDoItem;
@@ -29,14 +29,16 @@ namespace bot.Core.Services.Classes
         {
             _toDoRepository.Delete(id);
         }
-        public IReadOnlyList<ToDoItem> GetActiveByUserId(long userId)
+        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
         {
             return _toDoRepository.GetActiveByUserId(userId);
         }
-        public IReadOnlyList<ToDoItem> GetAllByUserId(long userId)
+
+        public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
         {
             return _toDoRepository.GetAllByUserId(userId);
         }
+
         public void MarkCompleted(Guid id)
         {
             ToDoItem? toDoItem = _toDoRepository.Get(id);

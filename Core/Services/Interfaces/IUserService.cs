@@ -1,8 +1,5 @@
 ﻿#nullable enable
 using bot;
-
-
-#nullable enable
 using bot.Core.Entities;
 
 namespace bot.Core.Services.Interfaces

@@ -1,13 +1,8 @@
 ﻿using bot.Core.DataAccess;
 using bot.Core.Entities;
 using bot.Core.Exceptions;
-using Otus.ToDoList.ConsoleBot.Types;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using static bot.Core.Entities.ToDoItem;
 
 namespace bot.Infrastructure.DataAccess
@@ -19,30 +14,30 @@ namespace bot.Infrastructure.DataAccess
         {
             _toDoItemList.Add(item);
         }
-        public int CountActive(long userId)
+        public int CountActive(Guid userId)
         {
-            return _toDoItemList.FindAll(x => x.User.TelegramUserId == userId && x.State == ToDoItemState.Active).Count;
+            return _toDoItemList.FindAll(x => x.User.UserId == userId && x.State == ToDoItemState.Active).Count;
         }
         public void Delete(Guid id)
         {
             if (_toDoItemList.Exists(x => x.Id == id)) _toDoItemList.RemoveAll(x => x.Id == id);
             else throw new TaskDoesNotExistException("Задача с таким GUID не существует");
         }
-        public bool ExistsByName(long userId, string name)
+        public bool ExistsByName(Guid userId, string name)
         {
-            return _toDoItemList.Exists(x => x.User.TelegramUserId == userId && x.Name == name);
+            return _toDoItemList.Exists(x => x.User.UserId == userId && x.Name == name);
         }
         public ToDoItem Get(Guid id)
         {
             return _toDoItemList.Find(x => x.Id == id);
         }
-        public IReadOnlyList<ToDoItem> GetActiveByUserId(long userId)
+        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
         {
-            return _toDoItemList.FindAll(x => x.User.TelegramUserId == userId && x.State == ToDoItemState.Active);
+            return _toDoItemList.FindAll(x => x.User.UserId == userId && x.State == ToDoItemState.Active);
         }
-        public IReadOnlyList<ToDoItem> GetAllByUserId(long userId)
+        public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
         {
-            return _toDoItemList.FindAll(x => x.User.TelegramUserId == userId);
+            return _toDoItemList.FindAll(x => x.User.UserId == userId);
         }
         public void Update(ToDoItem item)
         {

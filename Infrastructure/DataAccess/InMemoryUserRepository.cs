@@ -1,5 +1,6 @@
 ﻿using bot.Core.DataAccess;
 using bot.Core.Entities;
+using System;
 using System.Collections.Generic;
 
 namespace bot.Infrastructure.DataAccess
@@ -11,6 +12,12 @@ namespace bot.Infrastructure.DataAccess
         {
             toDoUserList.Add(user);
         }
+
+        public ToDoUser GetUser(Guid userId)
+        {
+            throw new NotImplementedException();
+        }
+
         public ToDoUser GetUserByTelegramUserId(long telegramUserId)
         {
             return toDoUserList.Find(x => x.TelegramUserId == telegramUserId);
