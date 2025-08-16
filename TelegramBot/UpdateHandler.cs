@@ -1,4 +1,8 @@
 ﻿#nullable enable
+using bot.Core.DataAccess;
+using bot.Core.Entities;
+using bot.Core.Exceptions;
+using bot.Core.Services.Interfaces;
 using Otus.ToDoList.ConsoleBot;
 using Otus.ToDoList.ConsoleBot.Types;
 using System;
@@ -7,10 +11,12 @@ using System.Text;
 
 namespace bot
 {
-    internal class UpdateHandler(IUserService UserService, IToDoService ToDoService) : IUpdateHandler
+    internal class UpdateHandler(IUserService UserService, IToDoService ToDoService, IToDoReportService ToDoReportService) : IUpdateHandler
     {
         private readonly IUserService _userService = UserService;
         private readonly IToDoService _toDoService = ToDoService;
+        private readonly IToDoReportService _toDoReportService = ToDoReportService;
+        
         private static string GetMessageForShowCommands(IReadOnlyList<ToDoItem> toDoItemList, string command)
         {
             StringBuilder message = new();
@@ -32,19 +38,26 @@ namespace bot
                 _userService.RegisterUser(update.Message.From.Id, update.Message.From.Username);
             }
         }
+        private void Report(ITelegramBotClient botClient, Update update)
+        {
+            (int total, int completed, int active, DateTime generatedAt) = _toDoReportService.GetUserStats(_userService.GetUser(update.Message.From.Id).UserId);
+            botClient.SendMessage(update.Message.Chat, $"Статистика по задачам на {generatedAt}. Всего: {total}; Завершенных: {completed}; Активных: {active}");
+        }
         private void Help(ITelegramBotClient botClient, Update update)
         {
             botClient.SendMessage
             (
                 update.Message.Chat,
                                                                                 "Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
-                ((_userService.GetUser(update.Message.From.Id) != null) ?       "/addtask      — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
+                ((_userService.GetUser(update.Message.From.Id) == null) ?       "/start        — начните работу с этой команды;\r\n"
+                                                                                :
+                                                                                "/addtask      — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
                                                                                 "/showalltasks — покажу список всех задач;\r\n" +
                                                                                 "/showtasks    — покажу список активных задач;\r\n" +
+                                                                                "/find         — покажу список актичных задач, начинающихся с префиса (укажите префикс через пробел);\r\n" +
                                                                                 "/removetask   — удалю задачу из списка (укажите ее GUID через пробел);\r\n" +
-                                                                                "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n" 
-                                                                                :
-                                                                                "/start        — начните работу с этой команды;\r\n"
+                                                                                "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n"  +
+                                                                                "/report       — покажу статистику по задачам;\r\n"
                 ) +
                                                                                 "/help         — покажу справочную информацию;\r\n" +
                                                                                 "/info         — покажу свои версию и дату создания;\r\n" +
@@ -54,7 +67,7 @@ namespace bot
         }
         private static void Info(ITelegramBotClient botClient, Update update)
         {
-            botClient.SendMessage(update.Message.Chat, "Версия — 0.0.4, дата создания — 11.08.2025");
+            botClient.SendMessage(update.Message.Chat, "Версия — 0.0.5, дата создания — 14.08.2025");
         }
         public void HandleUpdateAsync(ITelegramBotClient botClient, Update update)
         {
@@ -83,10 +96,13 @@ namespace bot
                         botClient.SendMessage(update.Message.Chat, "Задача добавлена");
                         break;
                     case "/showalltasks" when toDoUser != null:
-                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetAllByUserId(toDoUser.TelegramUserId), command));
+                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetAllByUserId(toDoUser.UserId), command));
                         break;
                     case "/showtasks" when toDoUser != null:
-                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetActiveByUserId(toDoUser.TelegramUserId), command));
+                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetActiveByUserId(toDoUser.UserId), command));
+                        break;
+                    case "/find" when toDoUser != null && commandParam != null:
+                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.Find(toDoUser, commandParam), "/showtasks"));
                         break;
                     case "/removetask" when toDoUser != null && commandParam != null:
                         if (Guid.TryParse(commandParam, out taskId))
@@ -103,6 +119,9 @@ namespace bot
                             botClient.SendMessage(update.Message.Chat, "Задача завершена");
                         }
                         else botClient.SendMessage(update.Message.Chat, "Некорректный идентификатор задачи");
+                        break;
+                    case "/report":
+                        Report(botClient, update);
                         break;
                     case "/help":
                         Help(botClient, update);
