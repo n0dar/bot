@@ -5,18 +5,16 @@ using System.Collections.Generic;
 
 namespace bot.Core.Services.Classes
 {
-    internal class UserService(IUserRepository UserRepository) : IUserService
+    internal class UserService(IUserRepository userRepository) : IUserService
     {
-        private readonly IUserRepository _userRepository = UserRepository;
-
         ToDoUser IUserService.GetUser(long telegramUserId)
         {
-            return _userRepository.GetUserByTelegramUserId(telegramUserId);
+            return userRepository.GetUserByTelegramUserId(telegramUserId);
         }
         ToDoUser IUserService.RegisterUser(long telegramUserId, string telegramUserName)
         {
             ToDoUser toDoUser = new(telegramUserId, telegramUserName);
-            _userRepository.Add(toDoUser);
+            userRepository.Add(toDoUser);
             return toDoUser;
         }
     }

@@ -12,47 +12,46 @@ namespace bot.Core.Services.Classes
 {
     internal class ToDoService(IToDoRepository toDoRepository) : IToDoService
     {
-        private readonly int _TaskCountLimit = 100;
-        private readonly int _TaskLengthLimit = 100;
-        private readonly IToDoRepository _toDoRepository = toDoRepository;
+        private readonly int _taskCountLimit = 100;
+        private readonly int _taskLengthLimit = 100;
         
         public ToDoItem Add(ToDoUser user, string name)
         {
-            if (_toDoRepository.CountActive(user.UserId) == _TaskCountLimit) throw new TaskCountLimitException(_TaskCountLimit);
-            if (name.Length > _TaskLengthLimit) throw new TaskLengthLimitException(name.Length, _TaskLengthLimit);
-            if (_toDoRepository.ExistsByName(user.UserId, name)) throw new DuplicateTaskException(name);
+            if (toDoRepository.CountActive(user.UserId) == _taskCountLimit) throw new TaskCountLimitException(_taskCountLimit);
+            if (name.Length > _taskLengthLimit) throw new TaskLengthLimitException(name.Length, _taskLengthLimit);
+            if (toDoRepository.ExistsByName(user.UserId, name)) throw new DuplicateTaskException(name);
             ToDoItem ToDoItem = new(user, name);
-            _toDoRepository.Add(ToDoItem);
+            toDoRepository.Add(ToDoItem);
             return ToDoItem;
         }
         public void Delete(Guid id)
         {
-            _toDoRepository.Delete(id);
+            toDoRepository.Delete(id);
         }
 
         public IReadOnlyList<ToDoItem> Find(ToDoUser user, string namePrefix)
         {
-            return _toDoRepository.Find(user.UserId, x => x.Name.StartsWith(namePrefix));
+            return toDoRepository.Find(user.UserId, x => x.Name.StartsWith(namePrefix));
         }
 
         public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
         {
-            return _toDoRepository.GetActiveByUserId(userId);
+            return toDoRepository.GetActiveByUserId(userId);
         }
 
         public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
         {
-            return _toDoRepository.GetAllByUserId(userId);
+            return toDoRepository.GetAllByUserId(userId);
         }
 
         public void MarkCompleted(Guid id)
         {
-            ToDoItem? toDoItem = _toDoRepository.Get(id);
+            ToDoItem? toDoItem = toDoRepository.Get(id);
             if (toDoItem != null)
             {
                 toDoItem.State = ToDoItemState.Completed;
                 toDoItem.StateChangedAt = DateTime.UtcNow;
-                _toDoRepository.Update(toDoItem);
+                toDoRepository.Update(toDoItem);
             }
             else throw new TaskDoesNotExistException("Активная задача с таким GUID не существует");
         }
