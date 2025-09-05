@@ -15,8 +15,18 @@ namespace bot
             try
             {
                 ConsoleBotClient botClient = new();
-                ToDoService toDoService = new(new InMemoryToDoRepository());
-                botClient.StartReceiving(new UpdateHandler(new UserService(new InMemoryUserRepository()), toDoService, new ToDoReportService(toDoService)));
+
+                InMemoryUserRepository inMemoryUserRepository = new();
+                UserService userService = new UserService(inMemoryUserRepository);
+
+                InMemoryToDoRepository inMemoryToDoRepository = new();
+                ToDoService toDoService = new(inMemoryToDoRepository);
+
+                ToDoReportService toDoReportService = new(inMemoryToDoRepository);
+
+                UpdateHandler updateHandler = new UpdateHandler(userService, toDoService, toDoReportService);
+
+                botClient.StartReceiving(updateHandler);
             }
             catch (Exception ex)
             {
