@@ -5,6 +5,7 @@ using bot.Core.Services.Interfaces;
 using bot.Infrastructure.DataAccess;
 using Otus.ToDoList.ConsoleBot;
 using System;
+using System.Threading;
 
 namespace bot
 {
@@ -17,16 +18,18 @@ namespace bot
                 ConsoleBotClient botClient = new();
 
                 InMemoryUserRepository inMemoryUserRepository = new();
-                UserService userService = new UserService(inMemoryUserRepository);
+                UserService userService = new(inMemoryUserRepository);
 
                 InMemoryToDoRepository inMemoryToDoRepository = new();
                 ToDoService toDoService = new(inMemoryToDoRepository);
 
                 ToDoReportService toDoReportService = new(inMemoryToDoRepository);
 
-                UpdateHandler updateHandler = new UpdateHandler(userService, toDoService, toDoReportService);
+                using CancellationTokenSource cts = new();
 
-                botClient.StartReceiving(updateHandler);
+                UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, cts.Token);
+
+                botClient.StartReceiving(updateHandler, cts.Token);
             }
             catch (Exception ex)
             {

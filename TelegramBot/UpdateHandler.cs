@@ -8,16 +8,19 @@ using Otus.ToDoList.ConsoleBot.Types;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace bot
 {
-    internal class UpdateHandler(IUserService UserService, IToDoService ToDoService, IToDoReportService ToDoReportService) : IUpdateHandler
+    internal class UpdateHandler(IUserService UserService, IToDoService ToDoService, IToDoReportService ToDoReportService, CancellationToken CT) : IUpdateHandler
     {
         private readonly IUserService _userService = UserService;
         private readonly IToDoService _toDoService = ToDoService;
         private readonly IToDoReportService _toDoReportService = ToDoReportService;
-        
-        private static string GetMessageForShowCommands(IReadOnlyList<ToDoItem> toDoItemList, string command)
+        private readonly CancellationToken _ct = CT;
+
+        private string GetMessageForShowCommands(IReadOnlyList<ToDoItem> toDoItemList, string command)
         {
             StringBuilder message = new();
             if (toDoItemList.Count > 0)
@@ -41,7 +44,7 @@ namespace bot
         private void Report(ITelegramBotClient botClient, Update update)
         {
             (int total, int completed, int active, DateTime generatedAt) = _toDoReportService.GetUserStats(_userService.GetUser(update.Message.From.Id).UserId);
-            botClient.SendMessage(update.Message.Chat, $"Статистика по задачам на {generatedAt}. Всего: {total}; Завершенных: {completed}; Активных: {active}");
+            botClient.SendMessage(update.Message.Chat, $"Статистика по задачам на {generatedAt}. Всего: {total}; Завершенных: {completed}; Активных: {active}", _ct);
         }
         private void Help(ITelegramBotClient botClient, Update update)
         {
@@ -62,14 +65,15 @@ namespace bot
                                                                                 "/help         — покажу справочную информацию;\r\n" +
                                                                                 "/info         — покажу свои версию и дату создания;\r\n" +
                                                                                 "Завершайте ввод нажатием на Enter.\r\n" +
-                                                                                "Ctrl + C      — завершу работу"
+                                                                                "Ctrl + C      — завершу работу",
+                _ct
             );
         }
-        private static void Info(ITelegramBotClient botClient, Update update)
+        private void Info(ITelegramBotClient botClient, Update update)
         {
-            botClient.SendMessage(update.Message.Chat, "Версия — 0.0.5, дата создания — 14.08.2025");
+            botClient.SendMessage(update.Message.Chat, "Версия — C.C.C, дата создания — DD.MM.YYYY", _ct);
         }
-        public void HandleUpdateAsync(ITelegramBotClient botClient, Update update)
+        public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
         {
             try
             {
@@ -93,32 +97,32 @@ namespace bot
                         break;
                     case "/addtask" when toDoUser != null && commandParam != null:
                         _toDoService.Add(toDoUser, commandParam);
-                        botClient.SendMessage(update.Message.Chat, "Задача добавлена");
+                        await botClient.SendMessage(update.Message.Chat, "Задача добавлена", ct);
                         break;
                     case "/showalltasks" when toDoUser != null:
-                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetAllByUserId(toDoUser.UserId), command));
+                        await botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetAllByUserId(toDoUser.UserId), command), ct);
                         break;
                     case "/showtasks" when toDoUser != null:
-                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetActiveByUserId(toDoUser.UserId), command));
+                        await botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.GetActiveByUserId(toDoUser.UserId), command), ct);
                         break;
                     case "/find" when toDoUser != null && commandParam != null:
-                        botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.Find(toDoUser, commandParam), "/showtasks"));
+                        await botClient.SendMessage(update.Message.Chat, GetMessageForShowCommands(_toDoService.Find(toDoUser, commandParam), "/showtasks"), ct);
                         break;
                     case "/removetask" when toDoUser != null && commandParam != null:
                         if (Guid.TryParse(commandParam, out taskId))
                         {
                             _toDoService.Delete(taskId);
-                            botClient.SendMessage(update.Message.Chat, "Задача удалена");
+                            await botClient.SendMessage(update.Message.Chat, "Задача удалена", ct);
                         }
-                        else botClient.SendMessage(update.Message.Chat, "Некорректный идентификатор задачи");
+                        else await botClient.SendMessage(update.Message.Chat, "Некорректный идентификатор задачи", ct);
                         break;
                     case "/completetask" when toDoUser != null && commandParam != null:
                         if (Guid.TryParse(commandParam, out taskId))
                         {
                             _toDoService.MarkCompleted(taskId);
-                            botClient.SendMessage(update.Message.Chat, "Задача завершена");
+                            await botClient.SendMessage(update.Message.Chat, "Задача завершена", ct);
                         }
-                        else botClient.SendMessage(update.Message.Chat, "Некорректный идентификатор задачи");
+                        else await botClient.SendMessage(update.Message.Chat, "Некорректный идентификатор задачи", ct);
                         break;
                     case "/report":
                         Report(botClient, update);
@@ -133,29 +137,49 @@ namespace bot
                         Help(botClient, update);
                         break;
                 }
-                botClient.SendMessage(update.Message.Chat, "Жду вашу команду...");
+                await botClient.SendMessage(update.Message.Chat, "Жду вашу команду...", ct);
             }
             catch (Exception ex)
-            when
+            {
+                await HandleErrorAsync(botClient, ex, ct);
+                await botClient.SendMessage(update.Message.Chat, "Жду вашу команду...", ct);
+            }
+        }
+        public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken ct)
+        {
+            if 
             (
-                ex is ArgumentException ||
-                ex is TaskCountLimitException ||
-                ex is TaskLengthLimitException ||
-                ex is DuplicateTaskException
+                exception is ArgumentException ||
+                exception is TaskCountLimitException ||
+                exception is TaskLengthLimitException ||
+                exception is DuplicateTaskException
             )
             {
-                botClient.SendMessage(update.Message.Chat, $"{ex.Message}");
+                Console.WriteLine($"{exception.Message}");
+                //botClient.SendMessage(update.Message.Chat, $"{ex.Message}", ct);
             }
-            catch (Exception ex)
+            else
             {
-                botClient.SendMessage(update.Message.Chat,
+                Console.WriteLine
+                (
                     $"Произошла непредвиденная ошибка:\r\n" +
-                    $"{ex.GetType().FullName}\r\n" +
-                    $"{ex.Message}\r\n" +
-                    $"{ex.StackTrace}\r\n" +
-                    $"{ex.InnerException}\r\n"
+                    $"{exception.GetType().FullName}\r\n" +
+                    $"{exception.Message}\r\n" +
+                    $"{exception.StackTrace}\r\n" +
+                    $"{exception.InnerException}\r\n"
                 );
+                //botClient.SendMessage
+                //(
+                //    update.Message.Chat,
+                //    $"Произошла непредвиденная ошибка:\r\n" +
+                //    $"{ex.GetType().FullName}\r\n" +
+                //    $"{ex.Message}\r\n" +
+                //    $"{ex.StackTrace}\r\n" +
+                //    $"{ex.InnerException}\r\n",
+                //    ct
+                //);
             }
+        }
         }
     }
 }
