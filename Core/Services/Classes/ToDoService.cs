@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using bot;
 using bot.Core.DataAccess;
 using bot.Core.Entities;
 using bot.Core.Exceptions;

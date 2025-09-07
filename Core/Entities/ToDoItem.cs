@@ -1,5 +1,4 @@
-﻿using Otus.ToDoList.ConsoleBot.Types;
-using System;
+﻿using System;
 
 namespace bot.Core.Entities
 {

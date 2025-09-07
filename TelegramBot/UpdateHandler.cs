@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using bot.Core.DataAccess;
 using bot.Core.Entities;
 using bot.Core.Exceptions;
 using bot.Core.Services.Interfaces;
@@ -20,6 +19,33 @@ namespace bot
         private readonly IToDoReportService _toDoReportService = ToDoReportService;
         private readonly CancellationToken _ct = CT;
 
+        public delegate void MessageEventHandler(string message);
+        private event MessageEventHandler? OnHandleUpdateStarted;
+        private event MessageEventHandler? OnHandleUpdateCompleted;
+        public void SubscribeUpdateStarted(MessageEventHandler handler)
+        {
+            OnHandleUpdateStarted += handler;
+        }
+        public void UnsubscribeUpdateStarted(MessageEventHandler handler)
+        {
+            OnHandleUpdateStarted -= handler;
+        }
+        public void SubscribeUpdateCompleted(MessageEventHandler handler)
+        {
+            OnHandleUpdateCompleted += handler;
+        }
+        public void UnsubscribeUpdateCompleted(MessageEventHandler handler)
+        {
+            OnHandleUpdateCompleted -= handler;
+        }
+        private void RaiseHandleUpdateStarted(string message)
+        {
+            OnHandleUpdateStarted?.Invoke(message);
+        }
+        private void RaiseHandleUpdateCompleted(string message)
+        {
+            OnHandleUpdateCompleted?.Invoke(message);
+        }
         private string GetMessageForShowCommands(IReadOnlyList<ToDoItem> toDoItemList, string command)
         {
             StringBuilder message = new();
@@ -77,6 +103,7 @@ namespace bot
         {
             try
             {
+                RaiseHandleUpdateStarted(update.Message.Text);
                 string command = update.Message.Text.Trim();
                 string? commandParam = null;
                 int spaceIndex = command.IndexOf(' ');
@@ -138,16 +165,19 @@ namespace bot
                         break;
                 }
                 await botClient.SendMessage(update.Message.Chat, "Жду вашу команду...", ct);
+                RaiseHandleUpdateCompleted(update.Message.Text);
             }
             catch (Exception ex)
             {
                 await HandleErrorAsync(botClient, ex, ct);
                 await botClient.SendMessage(update.Message.Chat, "Жду вашу команду...", ct);
+                RaiseHandleUpdateCompleted(update.Message.Text);
             }
         }
-        public async Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken ct)
+        public Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken ct)
         {
-            if 
+            ConsoleColor prevColor = Console.ForegroundColor;
+            if
             (
                 exception is ArgumentException ||
                 exception is TaskCountLimitException ||
@@ -155,11 +185,12 @@ namespace bot
                 exception is DuplicateTaskException
             )
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine($"{exception.Message}");
-                //botClient.SendMessage(update.Message.Chat, $"{ex.Message}", ct);
             }
             else
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine
                 (
                     $"Произошла непредвиденная ошибка:\r\n" +
@@ -168,18 +199,9 @@ namespace bot
                     $"{exception.StackTrace}\r\n" +
                     $"{exception.InnerException}\r\n"
                 );
-                //botClient.SendMessage
-                //(
-                //    update.Message.Chat,
-                //    $"Произошла непредвиденная ошибка:\r\n" +
-                //    $"{ex.GetType().FullName}\r\n" +
-                //    $"{ex.Message}\r\n" +
-                //    $"{ex.StackTrace}\r\n" +
-                //    $"{ex.InnerException}\r\n",
-                //    ct
-                //);
             }
-        }
+            Console.ForegroundColor = prevColor;
+            return Task.CompletedTask;
         }
     }
 }

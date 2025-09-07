@@ -1,7 +1,6 @@
 ﻿using bot.Core.DataAccess;
 using bot.Core.Entities;
 using bot.Core.Services.Interfaces;
-using System.Collections.Generic;
 
 namespace bot.Core.Services.Classes
 {
