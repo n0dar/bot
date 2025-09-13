@@ -1,19 +1,21 @@
 ﻿using bot.Core.DataAccess;
 using bot.Core.Entities;
 using bot.Core.Services.Interfaces;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace bot.Core.Services.Classes
 {
     internal class UserService(IUserRepository userRepository) : IUserService
     {
-        ToDoUser IUserService.GetUser(long telegramUserId)
+        public async Task<ToDoUser> GetUserAsync(long telegramUserId, CancellationToken ct)
         {
-            return userRepository.GetUserByTelegramUserId(telegramUserId);
+            return await Task.Run(() => userRepository.GetUserByTelegramUserIdAsync(telegramUserId, ct));
         }
-        ToDoUser IUserService.RegisterUser(long telegramUserId, string telegramUserName)
+        public async Task<ToDoUser> RegisterUserAsync(long telegramUserId, string telegramUserName, CancellationToken ct)
         {
             ToDoUser toDoUser = new(telegramUserId, telegramUserName);
-            userRepository.Add(toDoUser);
+            await Task.Run(() => userRepository.AddAsync(toDoUser, ct),ct);
             return toDoUser;
         }
     }

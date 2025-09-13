@@ -5,6 +5,8 @@ using bot.Core.Exceptions;
 using bot.Core.Services.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using static bot.Core.Entities.ToDoItem;
 
 namespace bot.Core.Services.Classes
@@ -13,44 +15,41 @@ namespace bot.Core.Services.Classes
     {
         private readonly int _taskCountLimit = 100;
         private readonly int _taskLengthLimit = 100;
-        
-        public ToDoItem Add(ToDoUser user, string name)
+        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, CancellationToken ct)
         {
-            if (toDoRepository.CountActive(user.UserId) == _taskCountLimit) throw new TaskCountLimitException(_taskCountLimit);
+            int countActive = await toDoRepository.CountActiveAsync(user.UserId, ct);
+            if (countActive == _taskCountLimit) throw new TaskCountLimitException(_taskCountLimit);
             if (name.Length > _taskLengthLimit) throw new TaskLengthLimitException(name.Length, _taskLengthLimit);
-            if (toDoRepository.ExistsByName(user.UserId, name)) throw new DuplicateTaskException(name);
+            if (await toDoRepository.ExistsByNameAsync(user.UserId, name, ct)) throw new DuplicateTaskException(name);
             ToDoItem ToDoItem = new(user, name);
-            toDoRepository.Add(ToDoItem);
+            await toDoRepository.AddAsync(ToDoItem, ct);
+            //return ToDoItem;
             return ToDoItem;
         }
-        public void Delete(Guid id)
+        public async Task DeleteAsync(Guid id, CancellationToken ct)
         {
-            toDoRepository.Delete(id);
+            await toDoRepository.DeleteAsync(id, ct);
         }
-
-        public IReadOnlyList<ToDoItem> Find(ToDoUser user, string namePrefix)
+        public async Task<IReadOnlyList<ToDoItem>> FindAsync(ToDoUser user, string namePrefix, CancellationToken ct)
         {
-            return toDoRepository.Find(user.UserId, x => x.Name.StartsWith(namePrefix));
+            return await toDoRepository.FindAsync(user.UserId, x => x.Name.StartsWith(namePrefix), ct);
         }
-
-        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
+        public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return toDoRepository.GetActiveByUserId(userId);
+            return await toDoRepository.GetActiveByUserIdAsync(userId, ct);
         }
-
-        public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
+        public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return toDoRepository.GetAllByUserId(userId);
+            return await toDoRepository.GetAllByUserIdAsync(userId, ct);
         }
-
-        public void MarkCompleted(Guid id)
+        public async Task MarkCompletedAsync(Guid id, CancellationToken ct)
         {
-            ToDoItem? toDoItem = toDoRepository.Get(id);
+            ToDoItem? toDoItem = await toDoRepository.GetAsync(id, ct);
             if (toDoItem != null)
             {
                 toDoItem.State = ToDoItemState.Completed;
                 toDoItem.StateChangedAt = DateTime.UtcNow;
-                toDoRepository.Update(toDoItem);
+                await toDoRepository.UpdateAsync(toDoItem, ct);
             }
             else throw new TaskDoesNotExistException("Активная задача с таким GUID не существует");
         }
