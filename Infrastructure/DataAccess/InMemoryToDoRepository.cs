@@ -3,6 +3,9 @@ using bot.Core.Entities;
 using bot.Core.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using static bot.Core.Entities.ToDoItem;
 
 namespace bot.Infrastructure.DataAccess
@@ -10,45 +13,46 @@ namespace bot.Infrastructure.DataAccess
     internal class InMemoryToDoRepository : IToDoRepository
     {
         public readonly List<ToDoItem> _toDoItemList = [];
-        public void Add(ToDoItem item)
+        public async Task AddAsync(ToDoItem item, CancellationToken ct)
         {
-            _toDoItemList.Add(item);
+            await Task.Run(() => _toDoItemList.Add(item), ct);
         }
-        public int CountActive(Guid userId)
+        public async Task<int> CountActiveAsync(Guid userId, CancellationToken ct)
         {
-            return _toDoItemList.FindAll(x => x.User.UserId == userId && x.State == ToDoItemState.Active).Count;
+            return await Task.Run(() => _toDoItemList.FindAll(x => x.User.UserId == userId && x.State == ToDoItemState.Active).Count, ct);
         }
-        public void Delete(Guid id)
+        public async Task DeleteAsync(Guid id, CancellationToken ct)
         {
-            if (_toDoItemList.Exists(x => x.Id == id)) _toDoItemList.RemoveAll(x => x.Id == id);
-            else throw new TaskDoesNotExistException("Задача с таким GUID не существует");
+            bool exists = await Task.Run(() => _toDoItemList.Exists(x => x.Id == id), ct); 
+            if (exists) 
+                await Task.Run(() => _toDoItemList.RemoveAll(x => x.Id == id), ct);
+            else 
+                throw new TaskDoesNotExistException("Задача с таким GUID не существует");
         }
-        public bool ExistsByName(Guid userId, string name)
+        public async Task<bool> ExistsByNameAsync(Guid userId, string name, CancellationToken ct)
         {
-            return _toDoItemList.Exists(x => x.User.UserId == userId && x.Name == name);
+            return await Task.Run(() => _toDoItemList.Exists(x => x.User.UserId == userId && x.Name == name), ct);
         }
-
-        public IReadOnlyList<ToDoItem> Find(Guid userId, Func<ToDoItem, bool> predicate)
+        public async Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct)
         {
-            //throw new NotImplementedException();
-            return _toDoItemList.FindAll(x => x.User.UserId == userId && predicate(x));
+            return await Task.Run(() => _toDoItemList.FindAll(x => x.User.UserId == userId && predicate(x)), ct);
         }
-
-        public ToDoItem Get(Guid id)
+        public async Task<ToDoItem> GetAsync(Guid id, CancellationToken ct)
         {
-            return _toDoItemList.Find(x => x.Id == id);
+            return await Task.Run(() => _toDoItemList.Find(x => x.Id == id), ct);
         }
-        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
+        public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return _toDoItemList.FindAll(x => x.User.UserId == userId && x.State == ToDoItemState.Active);
+            return await Task.Run(() => _toDoItemList.FindAll(x => x.User.UserId == userId && x.State == ToDoItemState.Active), ct);
         }
-        public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
+        public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return _toDoItemList.FindAll(x => x.User.UserId == userId);
+            return await Task.Run(() => _toDoItemList.FindAll(x => x.User.UserId == userId), ct);
         }
-        public void Update(ToDoItem item)
+        public async Task UpdateAsync(ToDoItem item, CancellationToken ct)
         {
-            _toDoItemList[_toDoItemList.FindIndex(x => x.Id == item.Id)] = item;
+            int index = await Task.Run(() => _toDoItemList.FindIndex(x => x.Id == item.Id), ct);
+            await Task.Run(()=>_toDoItemList[index] = item, ct);
         }
     }
 }

@@ -4,11 +4,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.14.36202.13
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "bot", "bot.csproj", "{8F550B49-1BEA-ED4F-0A5F-DB33B545837C}"
-	ProjectSection(ProjectDependencies) = postProject
-		{E5825011-6111-47E1-1C71-DF4D612ECECB} = {E5825011-6111-47E1-1C71-DF4D612ECECB}
-	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Otus.ToDoList.ConsoleBot", "Z:\Documents\OTUS\C-Sharp-Basic\Homeworks\05.2 ООП интерфейсы\Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj", "{E5825011-6111-47E1-1C71-DF4D612ECECB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Otus.ToDoList.ConsoleBot", "..\..\C-Sharp-Basic\Homeworks\07 Асинхронность, делегаты и события\Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj", "{9F6E7B29-0862-BE33-6FFF-CC0067849021}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -20,10 +17,10 @@ Global
 		{8F550B49-1BEA-ED4F-0A5F-DB33B545837C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F550B49-1BEA-ED4F-0A5F-DB33B545837C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8F550B49-1BEA-ED4F-0A5F-DB33B545837C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E5825011-6111-47E1-1C71-DF4D612ECECB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E5825011-6111-47E1-1C71-DF4D612ECECB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E5825011-6111-47E1-1C71-DF4D612ECECB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E5825011-6111-47E1-1C71-DF4D612ECECB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F6E7B29-0862-BE33-6FFF-CC0067849021}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F6E7B29-0862-BE33-6FFF-CC0067849021}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F6E7B29-0862-BE33-6FFF-CC0067849021}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F6E7B29-0862-BE33-6FFF-CC0067849021}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

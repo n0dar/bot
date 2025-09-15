@@ -1,10 +1,8 @@
-﻿using bot.Core.DataAccess;
-using bot.Core.Services;
-using bot.Core.Services.Classes;
-using bot.Core.Services.Interfaces;
+﻿using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
 using Otus.ToDoList.ConsoleBot;
 using System;
+using System.Threading;
 
 namespace bot
 {
@@ -17,19 +15,37 @@ namespace bot
                 ConsoleBotClient botClient = new();
 
                 InMemoryUserRepository inMemoryUserRepository = new();
-                UserService userService = new UserService(inMemoryUserRepository);
+                UserService userService = new(inMemoryUserRepository);
 
                 InMemoryToDoRepository inMemoryToDoRepository = new();
                 ToDoService toDoService = new(inMemoryToDoRepository);
 
                 ToDoReportService toDoReportService = new(inMemoryToDoRepository);
 
-                UpdateHandler updateHandler = new UpdateHandler(userService, toDoService, toDoReportService);
+                using CancellationTokenSource cts = new();
 
-                botClient.StartReceiving(updateHandler);
+                UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, cts.Token);
+
+                static void startedHandler(string msg) => Console.WriteLine($"Началась обработка сообщения '{msg}'");
+                static void completedHandler(string msg) => Console.WriteLine($"Закончилась обработка сообщения '{msg}'");
+
+                try
+                {
+                    updateHandler.SubscribeUpdateStarted(startedHandler);
+                    updateHandler.SubscribeUpdateCompleted(completedHandler);
+
+                    botClient.StartReceiving(updateHandler, cts.Token);
+                }
+                finally
+                {
+                    updateHandler.UnsubscribeUpdateStarted(startedHandler);
+                    updateHandler.UnsubscribeUpdateCompleted(completedHandler);
+                }
             }
             catch (Exception ex)
             {
+                ConsoleColor prevColor = Console.ForegroundColor;
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine
                 (
                     $"Произошла непредвиденная ошибка:\r\n" +
@@ -38,6 +54,7 @@ namespace bot
                     $"{ex.StackTrace}\r\n" +
                     $"{ex.InnerException}\r\n"
                 );
+                Console.ForegroundColor = prevColor;
             }
         }
     }
