@@ -1,18 +1,22 @@
 ﻿using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
-using Otus.ToDoList.ConsoleBot;
+
 using System;
 using System.Threading;
+using System.Threading.Tasks;
+using Telegram.Bot;
+using Telegram.Bot.Polling;
+using Telegram.Bot.Types.Enums;
 
 namespace bot
 {
     class Program
     {
-        private static void Main()
+        static async Task Main()
         {
             try
             {
-                ConsoleBotClient botClient = new();
+                TelegramBotClient botClient = new(Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User));
 
                 InMemoryUserRepository inMemoryUserRepository = new();
                 UserService userService = new(inMemoryUserRepository);
@@ -33,8 +37,17 @@ namespace bot
                 {
                     updateHandler.SubscribeUpdateStarted(startedHandler);
                     updateHandler.SubscribeUpdateCompleted(completedHandler);
+                    
+                    var receiverOptions = new ReceiverOptions
+                    {
+                        AllowedUpdates = [UpdateType.Message],
+                        DropPendingUpdates = true
+                    };
+                    botClient.StartReceiving(updateHandler, receiverOptions);
+                    var me = await botClient.GetMe();
+                    Console.WriteLine($"{me.FirstName} запущен!");
 
-                    botClient.StartReceiving(updateHandler, cts.Token);
+                    await Task.Delay(-1); // Устанавливаем бесконечную задержку
                 }
                 finally
                 {
