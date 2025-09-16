@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace bot
 {
@@ -77,25 +78,41 @@ namespace bot
         private async Task Help(ITelegramBotClient botClient, Update update)
         {
             ToDoUser? user = await _userService.GetUserAsync(update.Message.From.Id, _ct);
-            
-            await botClient.SendMessage
-            (
-                update.Message.Chat.Id,
-                                        "Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
-                ((user == null) ?       "/start        — начните работу с этой команды;\r\n"
-                                        :
-                                        "/addtask      — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
-                                        "/showalltasks — покажу список всех задач;\r\n" +
-                                        "/showtasks    — покажу список активных задач;\r\n" +
-                                        "/find         — покажу список актичных задач, начинающихся с префиса (укажите префикс через пробел);\r\n" +
-                                        "/removetask   — удалю задачу из списка (укажите ее GUID через пробел);\r\n" +
-                                        "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n"  +
-                                        "/report       — покажу статистику по задачам;\r\n"
-                                        ) +
-                                        "/help         — покажу справочную информацию;\r\n" +
-                                        "/info         — покажу свои версию и дату создания;\r\n", 
-                Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: _ct
-            );
+
+            KeyboardButton[] KeyboardButton;
+            string text;
+            if (user == null)
+            {
+                KeyboardButton = ["/start"];
+                text =
+                "Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
+                "/start — начните работу с этой команды;\r\n" +
+                "/help — покажу справочную информацию;\r\n" +
+                "/info — покажу свои версию и дату создания";
+            }
+            else
+            {
+                KeyboardButton = [ "/showalltasks", "/showtasks", "/report"];
+                text =
+                "Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
+                "/addtask — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
+                "/showalltasks — покажу список всех задач;\r\n" +
+                "/showtasks — покажу список активных задач;\r\n" +
+                "/find — покажу список актичных задач, начинающихся с префиса (укажите префикс через пробел);\r\n" +
+                "/removetask — удалю задачу из списка (укажите ее GUID через пробел);\r\n" +
+                "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n" +
+                "/report — покажу статистику по задачам;\r\n" +
+                "/help — покажу справочную информацию;\r\n" +
+                "/info — покажу свои версию и дату создания";
+            }
+
+            ReplyKeyboardMarkup keyboard = new(KeyboardButton)
+            {
+                ResizeKeyboard = true,
+                OneTimeKeyboard = false
+            };
+
+            await botClient.SendMessage(update.Message.Chat.Id, text, Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: keyboard, cancellationToken: _ct);
         }
         private void Info(ITelegramBotClient botClient, Update update)
         {
