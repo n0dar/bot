@@ -46,8 +46,20 @@ namespace bot
                     botClient.StartReceiving(updateHandler, receiverOptions);
                     var me = await botClient.GetMe();
                     Console.WriteLine($"{me.FirstName} запущен!");
+                    Console.WriteLine("Нажмите клавишу A для выхода");
 
-                    await Task.Delay(-1); // Устанавливаем бесконечную задержку
+                    ConsoleKeyInfo keyInfo;
+                    do
+                    {
+                        keyInfo = Console.ReadKey(intercept: true);
+                        if (keyInfo.Key == ConsoleKey.A)
+                        {
+                            cts.Cancel();
+                            break;
+                        }   
+                        else Console.WriteLine(me);
+                    }
+                    while (true);
                 }
                 finally
                 {
