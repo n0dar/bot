@@ -21,6 +21,21 @@ namespace bot
             {
                 TelegramBotClient botClient = new(Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User));
 
+                BotCommand[] commands =
+                [
+                    new() { Command = "start", Description = "Старт" },
+                    new() { Command = "addtask", Description = "Добавить (укажите имя через пробел)" },
+                    new() { Command = "showalltasks", Description = "Все" },
+                    new() { Command = "showtasks", Description = "Активные" },
+                    new() { Command = "find", Description = "Активные по префиксу (укажите через пробел)" },
+                    new() { Command = "removetask", Description = "Удалить по GUID (укажите через пробел)" },
+                    new() { Command = "completetask", Description = "Завершить по GUID (укажите через пробел)" },
+                    new() { Command = "report", Description = "Статистика" },
+                    new() { Command = "info", Description = "Версия и дата создания" }
+                ];
+
+                await botClient.SetMyCommands(commands);
+
                 InMemoryUserRepository inMemoryUserRepository = new();
                 UserService userService = new(inMemoryUserRepository);
 

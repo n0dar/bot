@@ -80,39 +80,39 @@ namespace bot
             ToDoUser? user = await _userService.GetUserAsync(update.Message.From.Id, _ct);
 
             KeyboardButton[] KeyboardButton;
-            string text;
+            //string text;
             if (user == null)
             {
                 KeyboardButton = ["/start"];
-                text =
-                "Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
-                "/start — начните работу с этой команды;\r\n" +
-                "/help — покажу справочную информацию;\r\n" +
-                "/info — покажу свои версию и дату создания";
+                //text =
+                //"Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
+                //"/start — начните работу с этой команды;\r\n" +
+                //"/help — покажу справочную информацию;\r\n" +
+                //"/info — покажу свои версию и дату создания";
             }
             else
             {
                 KeyboardButton = [ "/showalltasks", "/showtasks", "/report"];
-                text =
-                "Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
-                "/addtask — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
-                "/showalltasks — покажу список всех задач;\r\n" +
-                "/showtasks — покажу список активных задач;\r\n" +
-                "/find — покажу список актичных задач, начинающихся с префиса (укажите префикс через пробел);\r\n" +
-                "/removetask — удалю задачу из списка (укажите ее GUID через пробел);\r\n" +
-                "/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n" +
-                "/report — покажу статистику по задачам;\r\n" +
-                "/help — покажу справочную информацию;\r\n" +
-                "/info — покажу свои версию и дату создания";
+                //text =
+                //"Для взаимодействия со мной вам доступен следующий список команд:\r\n" +
+                //"/addtask — добавлю задачу в список (укажите ее имя через пробел);\r\n" +
+                //"/showalltasks — покажу список всех задач;\r\n" +
+                //"/showtasks — покажу список активных задач;\r\n" +
+                //"/find — покажу список актичных задач, начинающихся с префиса (укажите префикс через пробел);\r\n" +
+                //"/removetask — удалю задачу из списка (укажите ее GUID через пробел);\r\n" +
+                //"/completetask — изменю статус задачи с \"Активна\" на \"Выполнена\" (укажите ее GUID через пробел);\r\n" +
+                //"/report — покажу статистику по задачам;\r\n" +
+                //"/help — покажу справочную информацию;\r\n" +
+                //"/info — покажу свои версию и дату создания";
             }
 
             ReplyKeyboardMarkup keyboard = new(KeyboardButton)
             {
-                ResizeKeyboard = true,
-                OneTimeKeyboard = false
+                ResizeKeyboard = true//,
+                //OneTimeKeyboard = false
             };
 
-            await botClient.SendMessage(update.Message.Chat.Id, text, Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: keyboard, cancellationToken: _ct);
+            await botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: keyboard, cancellationToken: _ct);
         }
         private void Info(ITelegramBotClient botClient, Update update)
         {
@@ -139,7 +139,6 @@ namespace bot
                 {
                     case "/start" when toDoUser == null:
                         await Start(update);
-                        await Help(botClient, update);
                         break;
                     case "/addtask" when toDoUser != null && commandParam != null:
                         await _toDoService.AddAsync(toDoUser, commandParam, cancellationToken);
@@ -173,23 +172,22 @@ namespace bot
                     case "/report" when toDoUser != null:
                         await Report(botClient, update);
                         break;
-                    case "/help":
-                        await Help(botClient, update);
-                        break;
+                    //case "/help":
+                    //    break;
                     case "/info":
                         Info(botClient, update);
                         break;
                     default:
-                        await Help(botClient, update);
                         break;
                 }
                 RaiseHandleUpdateCompleted(update.Message.Text);
-                await botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
+                await Help(botClient, update);
+                //await botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
             }
             catch (Exception ex)
             {
                 await ((IUpdateHandler)this).HandleErrorAsync(botClient, ex, HandleErrorSource.HandleUpdateError, cancellationToken);
-                await botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
+                //await botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
                 RaiseHandleUpdateCompleted(update.Message.Text);
             }
         }
