@@ -1,18 +1,40 @@
 ﻿using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
-using Otus.ToDoList.ConsoleBot;
+
 using System;
 using System.Threading;
+using System.Threading.Tasks;
+using Telegram.Bot;
+using Telegram.Bot.Polling;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace bot
 {
     class Program
     {
-        private static void Main()
+        static async Task Main()
         {
             try
             {
-                ConsoleBotClient botClient = new();
+                TelegramBotClient botClient = new(Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User));
+
+                BotCommand[] commands =
+                [
+                    new() { Command = "start", Description = "Старт" },
+                    new() { Command = "addtask", Description = "Добавить (укажите имя через пробел)" },
+                    new() { Command = "showalltasks", Description = "Все" },
+                    new() { Command = "showtasks", Description = "Активные" },
+                    new() { Command = "find", Description = "Активные по префиксу (укажите через пробел)" },
+                    new() { Command = "removetask", Description = "Удалить по GUID (укажите через пробел)" },
+                    new() { Command = "completetask", Description = "Завершить по GUID (укажите через пробел)" },
+                    new() { Command = "report", Description = "Статистика" },
+                    new() { Command = "info", Description = "Версия и дата создания" }
+                ];
+
+                await botClient.SetMyCommands(commands);
 
                 InMemoryUserRepository inMemoryUserRepository = new();
                 UserService userService = new(inMemoryUserRepository);
@@ -33,8 +55,29 @@ namespace bot
                 {
                     updateHandler.SubscribeUpdateStarted(startedHandler);
                     updateHandler.SubscribeUpdateCompleted(completedHandler);
+                    
+                    var receiverOptions = new ReceiverOptions
+                    {
+                        AllowedUpdates = [UpdateType.Message],
+                        DropPendingUpdates = true
+                    };
+                    botClient.StartReceiving(updateHandler, receiverOptions);
+                    var me = await botClient.GetMe();
+                    Console.WriteLine($"{me.FirstName} запущен!");
+                    Console.WriteLine("Нажмите клавишу A для выхода");
 
-                    botClient.StartReceiving(updateHandler, cts.Token);
+                    ConsoleKeyInfo keyInfo;
+                    do
+                    {
+                        keyInfo = Console.ReadKey(intercept: true);
+                        if (keyInfo.Key == ConsoleKey.A)
+                        {
+                            cts.Cancel();
+                            break;
+                        }   
+                        else Console.WriteLine(me);
+                    }
+                    while (true);
                 }
                 finally
                 {

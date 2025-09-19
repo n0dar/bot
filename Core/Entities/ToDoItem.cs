@@ -17,7 +17,7 @@ namespace bot.Core.Entities
         public DateTime? StateChangedAt { get;set; }
         public override string ToString()
         {
-            return $"({State}) {Name} - {CreatedAt} - {Id}";
+            return $"({State}) {Name} - {CreatedAt} - '{Id}'";
         }
     }
 }
