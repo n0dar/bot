@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Remove="Infrastructure\DataAccess\InMemoryToDoRepository.cs" />
+    <Compile Remove="Infrastructure\DataAccess\InMemoryUserRepository.cs" />
   </ItemGroup>
 
   <ItemGroup>

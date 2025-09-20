@@ -37,8 +37,8 @@ namespace bot
 
                 await botClient.SetMyCommands(commands);
 
-                InMemoryUserRepository inMemoryUserRepository = new();
-                UserService userService = new(inMemoryUserRepository);
+                FileUserRepository fileUserRepository = new("UserRepository");
+                UserService userService = new(fileUserRepository);
 
                 FileToDoRepository fileToDoRepository = new("ToDoRepository");
 
