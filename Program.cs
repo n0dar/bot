@@ -1,4 +1,5 @@
-﻿using bot.Core.Services.Classes;
+﻿using bot.Core.DataAccess;
+using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
 
 using System;
@@ -39,10 +40,11 @@ namespace bot
                 InMemoryUserRepository inMemoryUserRepository = new();
                 UserService userService = new(inMemoryUserRepository);
 
-                InMemoryToDoRepository inMemoryToDoRepository = new();
-                ToDoService toDoService = new(inMemoryToDoRepository);
+                FileToDoRepository fileToDoRepository = new("ToDoRepository");
 
-                ToDoReportService toDoReportService = new(inMemoryToDoRepository);
+                ToDoService toDoService = new(fileToDoRepository);
+
+                ToDoReportService toDoReportService = new(fileToDoRepository);
 
                 using CancellationTokenSource cts = new();
 

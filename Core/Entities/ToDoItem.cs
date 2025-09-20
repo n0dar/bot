@@ -1,9 +1,17 @@
 ﻿using System;
+using System.Text.Json.Serialization;
 
 namespace bot.Core.Entities
 {
     internal class ToDoItem(ToDoUser user, string name)
     {
+        [JsonConstructor]
+        public ToDoItem(Guid id, ToDoUser user, string name) : this(user, name)
+        {
+            this.Id = id;
+            this.User= user;
+            this.Name = name;
+        }
         public enum ToDoItemState
         {
             Active,
