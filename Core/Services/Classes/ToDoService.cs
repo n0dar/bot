@@ -23,7 +23,6 @@ namespace bot.Core.Services.Classes
             if (await toDoRepository.ExistsByNameAsync(user.UserId, name, ct)) throw new DuplicateTaskException(name);
             ToDoItem ToDoItem = new(user, name);
             await toDoRepository.AddAsync(ToDoItem, ct);
-            //return ToDoItem;
             return ToDoItem;
         }
         public async Task DeleteAsync(Guid id, CancellationToken ct)
