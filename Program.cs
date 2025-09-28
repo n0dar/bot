@@ -1,4 +1,5 @@
-﻿using bot.Core.Services.Classes;
+﻿using bot.Core.DataAccess;
+using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
 
 using System;
@@ -36,13 +37,14 @@ namespace bot
 
                 await botClient.SetMyCommands(commands);
 
-                InMemoryUserRepository inMemoryUserRepository = new();
-                UserService userService = new(inMemoryUserRepository);
+                FileUserRepository fileUserRepository = new("UserRepository");
+                UserService userService = new(fileUserRepository);
 
-                InMemoryToDoRepository inMemoryToDoRepository = new();
-                ToDoService toDoService = new(inMemoryToDoRepository);
+                FileToDoRepository fileToDoRepository = new("ToDoRepository");
 
-                ToDoReportService toDoReportService = new(inMemoryToDoRepository);
+                ToDoService toDoService = new(fileToDoRepository);
+
+                ToDoReportService toDoReportService = new(fileToDoRepository);
 
                 using CancellationTokenSource cts = new();
 

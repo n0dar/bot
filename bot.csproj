@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Infrastructure\DataAccess\InMemoryToDoRepository.cs" />
+    <Compile Remove="Infrastructure\DataAccess\InMemoryUserRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Telegram.Bot" Version="22.7.2" />
   </ItemGroup>
 
