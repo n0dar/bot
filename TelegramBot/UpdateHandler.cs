@@ -2,6 +2,7 @@
 using bot.Core.Entities;
 using bot.Core.Exceptions;
 using bot.Core.Services.Interfaces;
+using bot.TelegramBot.Scenarios;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -24,6 +25,7 @@ namespace bot
         public delegate void MessageEventHandler(string message);
         private event MessageEventHandler? OnHandleUpdateStarted;
         private event MessageEventHandler? OnHandleUpdateCompleted;
+
         public void SubscribeUpdateStarted(MessageEventHandler handler)
         {
             OnHandleUpdateStarted += handler;
