@@ -10,7 +10,7 @@ namespace bot.TelegramBot.Scenarios
         private readonly Dictionary<long, ScenarioContext> _contextRepository = [];
         Task<ScenarioContext> IScenarioContextRepository.GetContext(long userId, CancellationToken ct)
         {
-            _contextRepository.TryGetValue(userId, out var context);
+            _contextRepository.TryGetValue(userId, out ScenarioContext context);
             return Task.FromResult(context);
         }
         Task IScenarioContextRepository.ResetContext(long userId, CancellationToken ct)

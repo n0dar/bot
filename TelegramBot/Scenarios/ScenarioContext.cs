@@ -12,7 +12,7 @@ namespace bot.TelegramBot.Scenarios
     {
         //Id пользователя в Telegram
         long UserId { get; set; }
-        ScenarioType CurrentScenario { get; set; } = scenario;
+        public ScenarioType CurrentScenario { get; set; } = scenario;
         //Текущий шаг сценария
         string? CurrentStep {  get; set; }
         //Дополнительная инфрмация, необходимая для работы сценария
