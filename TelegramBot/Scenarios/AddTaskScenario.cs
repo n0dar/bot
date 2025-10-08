@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Types;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace bot.TelegramBot.Scenarios
 {
@@ -21,11 +22,12 @@ namespace bot.TelegramBot.Scenarios
             {
                 case null:
                     context.Data["Name"] = await _userService.GetUserAsync(update.Message.From.Id, ct);
-                    await bot.SendMessage(update.Message.Chat.Id, "Введите название задачи:", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
                     context.CurrentStep = "Name";
+                    await bot.SendMessage(update.Message.Chat.Id, "Введите название задачи:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
                     return ScenarioResult.Transition;
                 default:
                     await _toDoService.AddAsync((ToDoUser)context.Data["Name"], update.Message.Text, ct);
+                    await bot.SendMessage(update.Message.Chat.Id, "Задача добавлена", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.DefaultKeyboard, cancellationToken: ct);
                     return ScenarioResult.Completed;
             }
         }

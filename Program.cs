@@ -10,7 +10,6 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
 using bot.TelegramBot.Scenarios;
 
 namespace bot
@@ -26,6 +25,7 @@ namespace bot
                 BotCommand[] commands =
                 [
                     new() { Command = "start", Description = "Старт" },
+                    new() { Command = "cancel", Description = "Отменить команду" },
                     new() { Command = "addtask", Description = "Добавить (укажите имя через пробел)" },
                     new() { Command = "showalltasks", Description = "Все" },
                     new() { Command = "showtasks", Description = "Активные" },

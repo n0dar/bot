@@ -2,6 +2,7 @@
 using bot.Core.Entities;
 using bot.Core.Exceptions;
 using bot.Core.Services.Interfaces;
+using bot.TelegramBot;
 using bot.TelegramBot.Scenarios;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,6 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace bot
 {
@@ -37,11 +37,7 @@ namespace bot
             IScenario scenario = GetScenario(context.CurrentScenario);
             ScenarioResult ScenarioResult = await scenario.HandleMessageAsync(_botClient, context, update, ct);
 
-            if (ScenarioResult == ScenarioResult.Completed)
-            {
-                if (context.CurrentScenario == ScenarioType.AddTask) await _botClient.SendMessage(update.Message.Chat.Id, "Задача добавлена", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
-                await ContextRepository.ResetContext(update.Message.From.Id, ct);
-            }
+            if (ScenarioResult == ScenarioResult.Completed) await ContextRepository.ResetContext(update.Message.From.Id, ct);
             else await ContextRepository.SetContext(update.Message.From.Id, context, ct);
         }
         public void SubscribeUpdateStarted(MessageEventHandler handler)
@@ -95,20 +91,6 @@ namespace bot
             (int total, int completed, int active, DateTime generatedAt) = await _toDoReportService.GetUserStatsAsync(user.UserId, _ct);
             await _botClient.SendMessage(update.Message.Chat.Id, $"Статистика по задачам на {generatedAt}. Всего: {total}; Завершенных: {completed}; Активных: {active}", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: _ct);
         }
-        private async Task Help(Update update)
-        {
-            ToDoUser? user = await _userService.GetUserAsync(update.Message.From.Id, _ct);
-
-            KeyboardButton[] keyboardButton;
-            if (user == null) keyboardButton = ["/start"];
-            else keyboardButton = [ "/addtask", "/showalltasks", "/showtasks", "/report"];
-
-            ReplyKeyboardMarkup keyboard = new(keyboardButton)
-            {
-                ResizeKeyboard = true
-            };
-            await _botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: keyboard, cancellationToken: _ct); 
-         }
         private void Info(Update update)
         {
             _botClient.SendMessage(update.Message.Chat.Id, "Версия — C.C.C, дата создания — DD.MM.YYYY", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: _ct);
@@ -118,20 +100,19 @@ namespace bot
             try
             {
                 RaiseHandleUpdateStarted(update.Message.Text);
-                _botClient = botClient;               
+                _botClient = botClient;
+                string command = update.Message.Text.Trim();
+                string? commandParam = null;
+                int spaceIndex = command.IndexOf(' ');
+                if (spaceIndex >= 0 && spaceIndex < command.Length - 1)
+                {
+                    commandParam = command[(spaceIndex + 1)..].Trim();
+                    command = command[..spaceIndex];
+                }
                 ScenarioContext? scenarioContext = await ContextRepository.GetContext(update.Message.From.Id, cancellationToken);
-                if (scenarioContext != null) await ProcessScenario(scenarioContext, update, cancellationToken);
+                if (scenarioContext != null && command!="/cancel") await ProcessScenario(scenarioContext, update, cancellationToken);
                 else
                 {
-                    string command = update.Message.Text.Trim();
-                    string? commandParam = null;
-                    int spaceIndex = command.IndexOf(' ');
-                    if (spaceIndex >= 0 && spaceIndex < command.Length - 1)
-                    {
-                        commandParam = command[(spaceIndex + 1)..].Trim();
-                        command = command[..spaceIndex];
-                    }
-
                     ToDoUser? toDoUser = await _userService.GetUserAsync(update.Message.From.Id, _ct);
                     Guid taskId;
 
@@ -175,9 +156,11 @@ namespace bot
                             Info(update);
                             break;
                         case "/cancel":
+                            await ContextRepository.ResetContext(update.Message.From.Id, cancellationToken);
+                            await botClient.SendMessage(update.Message.Chat.Id, "Команда отменена", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.DefaultKeyboard, cancellationToken: cancellationToken);
                             break;
                         default:
-                            await Help(update);
+                            await _botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: toDoUser == null ? Keyboards.StartKeyboard : Keyboards.DefaultKeyboard, cancellationToken: _ct);
                             break;
                     }
                     RaiseHandleUpdateCompleted(update.Message.Text);
