@@ -14,8 +14,8 @@ namespace bot.TelegramBot.Scenarios
         long UserId { get; set; }
         public ScenarioType CurrentScenario { get; set; } = scenario;
         //Текущий шаг сценария
-        string? CurrentStep {  get; set; }
+        public string? CurrentStep {  get; set; }
         //Дополнительная инфрмация, необходимая для работы сценария
-        Dictionary<string, object> Data {  get; set; }
+        public Dictionary<string, object> Data {  get; set; } = [];
     }
 }

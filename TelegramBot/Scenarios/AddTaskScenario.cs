@@ -1,0 +1,33 @@
+﻿using bot.Core.Entities;
+using bot.Core.Services.Interfaces;
+using System.Threading;
+using System.Threading.Tasks;
+using Telegram.Bot;
+using Telegram.Bot.Types;
+
+namespace bot.TelegramBot.Scenarios
+{
+    internal class AddTaskScenario(IUserService UserService, IToDoService ToDoService) : IScenario
+    {
+        private readonly IUserService _userService  = UserService;
+        private readonly IToDoService _toDoService = ToDoService;
+        bool IScenario.CanHandle(ScenarioType scenario)
+        {
+            return scenario == ScenarioType.AddTask;
+        }
+        async Task<ScenarioResult> IScenario.HandleMessageAsync(ITelegramBotClient bot, ScenarioContext context, Update update, CancellationToken ct)
+        {
+            switch (context.CurrentStep)
+            {
+                case null:
+                    context.Data["Name"] = await _userService.GetUserAsync(update.Message.From.Id, ct);
+                    await bot.SendMessage(update.Message.Chat.Id, "Введите название задачи:", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
+                    context.CurrentStep = "Name";
+                    return ScenarioResult.Transition;
+                default:
+                    await _toDoService.AddAsync((ToDoUser)context.Data["Name"], update.Message.Text, ct);
+                    return ScenarioResult.Completed;
+            }
+        }
+    }
+}

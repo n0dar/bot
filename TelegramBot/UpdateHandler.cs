@@ -13,6 +13,7 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace bot
 {
@@ -36,7 +37,11 @@ namespace bot
             IScenario scenario = GetScenario(context.CurrentScenario);
             ScenarioResult ScenarioResult = await scenario.HandleMessageAsync(_botClient, context, update, ct);
 
-            if (ScenarioResult == ScenarioResult.Completed) await ContextRepository.ResetContext(update.Message.From.Id, ct);
+            if (ScenarioResult == ScenarioResult.Completed)
+            {
+                if (context.CurrentScenario == ScenarioType.AddTask) await _botClient.SendMessage(update.Message.Chat.Id, "Задача добавлена", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
+                await ContextRepository.ResetContext(update.Message.From.Id, ct);
+            }
             else await ContextRepository.SetContext(update.Message.From.Id, context, ct);
         }
         public void SubscribeUpdateStarted(MessageEventHandler handler)
@@ -94,17 +99,16 @@ namespace bot
         {
             ToDoUser? user = await _userService.GetUserAsync(update.Message.From.Id, _ct);
 
-            KeyboardButton[] KeyboardButton;
-            if (user == null) KeyboardButton = ["/start"];
-            else KeyboardButton = [ "/showalltasks", "/showtasks", "/report"];
+            KeyboardButton[] keyboardButton;
+            if (user == null) keyboardButton = ["/start"];
+            else keyboardButton = [ "/addtask", "/showalltasks", "/showtasks", "/report"];
 
-            ReplyKeyboardMarkup keyboard = new(KeyboardButton)
+            ReplyKeyboardMarkup keyboard = new(keyboardButton)
             {
                 ResizeKeyboard = true
             };
-
-            await _botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: keyboard, cancellationToken: _ct);
-        }
+            await _botClient.SendMessage(update.Message.Chat.Id, "Жду вашу команду...", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: keyboard, cancellationToken: _ct); 
+         }
         private void Info(Update update)
         {
             _botClient.SendMessage(update.Message.Chat.Id, "Версия — C.C.C, дата создания — DD.MM.YYYY", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: _ct);
@@ -136,10 +140,9 @@ namespace bot
                         case "/start" when toDoUser == null:
                             await Start(update);
                             break;
-                        case "/addtask" when toDoUser != null && commandParam != null:
-                            await _toDoService.AddAsync(toDoUser, commandParam, cancellationToken);
-                            await botClient.SendMessage(update.Message.Chat.Id, "Задача добавлена", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
-                            break;
+                        case "/addtask" when toDoUser != null:
+                            await ProcessScenario(new ScenarioContext(ScenarioType.AddTask), update, cancellationToken);
+                        break;
                         case "/showalltasks" when toDoUser != null:
                             await botClient.SendMessage(update.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.GetAllByUserIdAsync(toDoUser.UserId, cancellationToken), command), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
                             break;
@@ -168,16 +171,17 @@ namespace bot
                         case "/report" when toDoUser != null:
                             await Report(update);
                             break;
-                        //case "/help":
-                        //    break;
                         case "/info":
                             Info(update);
                             break;
+                        case "/cancel":
+                            break;
                         default:
+                            await Help(update);
                             break;
                     }
                     RaiseHandleUpdateCompleted(update.Message.Text);
-                    await Help(update);
+                    //await Help(update);
                 }
             }
             catch (Exception ex)
