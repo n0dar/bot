@@ -1,5 +1,4 @@
-﻿using bot.Core.DataAccess;
-using bot.Core.Services.Classes;
+﻿using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
 
 using System;
