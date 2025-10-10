@@ -1,12 +1,13 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.Text.Json.Serialization;
 
 namespace bot.Core.Entities
 {
-    internal class ToDoItem(ToDoUser user, string name, DateOnly deadline)
+    internal class ToDoItem(ToDoUser user, string name, DateOnly deadline, ToDoList? list)
     {
         [JsonConstructor]
-        public ToDoItem(Guid id, ToDoUser user, string name, DateOnly deadline) : this(user, name, deadline)
+        public ToDoItem(Guid id, ToDoUser user, string name, DateOnly deadline, ToDoList? list) : this(user, name, deadline, list)
         {
             this.Id = id;
             this.User= user;
@@ -25,6 +26,7 @@ namespace bot.Core.Entities
         public ToDoItemState State { get; set; } = ToDoItemState.Active;
         public DateTime? StateChangedAt { get; set; }
         public DateOnly Deadline { get; set; }
+        public ToDoList? List { get; set; } = list;
         public override string ToString()
         {
             return $"({State}) {Name} - {CreatedAt} - '{Id}'";

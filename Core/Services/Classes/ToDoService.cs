@@ -15,13 +15,13 @@ namespace bot.Core.Services.Classes
     {
         private readonly int _taskCountLimit = 100;
         private readonly int _taskLengthLimit = 100;
-        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, DateOnly deadline, CancellationToken ct)
+        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, DateOnly deadline, ToDoList? list, CancellationToken ct)
         {
             int countActive = await toDoRepository.CountActiveAsync(user.UserId, ct);
             if (countActive == _taskCountLimit) throw new TaskCountLimitException(_taskCountLimit);
             if (name.Length > _taskLengthLimit) throw new TaskLengthLimitException(name.Length, _taskLengthLimit);
             if (await toDoRepository.ExistsByNameAsync(user.UserId, name, ct)) throw new DuplicateTaskException(name);
-            ToDoItem ToDoItem = new(user, name, deadline);
+            ToDoItem ToDoItem = new(user, name, deadline, list);
             await toDoRepository.AddAsync(ToDoItem, ct);
             return ToDoItem;
         }
