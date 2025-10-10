@@ -1,16 +1,15 @@
-﻿using bot.Core.DataAccess;
-using bot.Core.Services.Classes;
+﻿using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegram.Bot.Types.ReplyMarkups;
-using static System.Net.Mime.MediaTypeNames;
+using bot.TelegramBot.Scenarios;
 
 namespace bot
 {
@@ -25,6 +24,7 @@ namespace bot
                 BotCommand[] commands =
                 [
                     new() { Command = "start", Description = "Старт" },
+                    new() { Command = "cancel", Description = "Отменить команду" },
                     new() { Command = "addtask", Description = "Добавить (укажите имя через пробел)" },
                     new() { Command = "showalltasks", Description = "Все" },
                     new() { Command = "showtasks", Description = "Активные" },
@@ -48,7 +48,14 @@ namespace bot
 
                 using CancellationTokenSource cts = new();
 
-                UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, cts.Token);
+                IEnumerable<IScenario> scenerios =
+                [
+                    new AddTaskScenario(userService, toDoService)
+                ];
+
+                InMemoryScenarioContextRepository contextRepository = new();
+
+                UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, scenerios, contextRepository, cts.Token);
 
                 static void startedHandler(string msg) => Console.WriteLine($"Началась обработка сообщения '{msg}'");
                 static void completedHandler(string msg) => Console.WriteLine($"Закончилась обработка сообщения '{msg}'");
