@@ -1,6 +1,8 @@
-﻿using bot.Core.Services.Classes;
+﻿using bot.Core.Entities;
+using bot.Core.Services.Classes;
+using bot.Core.Services.Interfaces;
 using bot.Infrastructure.DataAccess;
-
+using bot.TelegramBot.Scenarios;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,7 +11,6 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using bot.TelegramBot.Scenarios;
 
 namespace bot
 {
@@ -26,8 +27,7 @@ namespace bot
                     new() { Command = "start", Description = "Старт" },
                     new() { Command = "cancel", Description = "Отменить команду" },
                     new() { Command = "addtask", Description = "Добавить (укажите имя через пробел)" },
-                    new() { Command = "showalltasks", Description = "Все" },
-                    new() { Command = "showtasks", Description = "Активные" },
+                    new() { Command = "show", Description = "Активные" },
                     new() { Command = "find", Description = "Активные по префиксу (укажите через пробел)" },
                     new() { Command = "removetask", Description = "Удалить по GUID (укажите через пробел)" },
                     new() { Command = "completetask", Description = "Завершить по GUID (укажите через пробел)" },
@@ -55,7 +55,12 @@ namespace bot
 
                 InMemoryScenarioContextRepository contextRepository = new();
 
-                UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, scenerios, contextRepository, cts.Token);
+
+                FileToDoListRepository fileToDoListRepository = new("ToDoListRepository");
+                ToDoListService toDoListService = new(fileToDoListRepository);
+
+
+                UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, scenerios, contextRepository, toDoListService, cts.Token);
 
                 static void startedHandler(string msg) => Console.WriteLine($"Началась обработка сообщения '{msg}'");
                 static void completedHandler(string msg) => Console.WriteLine($"Закончилась обработка сообщения '{msg}'");

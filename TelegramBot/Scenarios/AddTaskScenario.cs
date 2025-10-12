@@ -33,7 +33,7 @@ namespace bot.TelegramBot.Scenarios
                 default:
                     if (DateOnly.TryParseExact(update.Message.Text, "dd.MM.yyyy", out DateOnly deadline))
                     {
-                        await _toDoService.AddAsync((ToDoUser)context.Data["ToDoUser"], context.Data["ToDoName"].ToString(), deadline, ct);
+                        await _toDoService.AddAsync((ToDoUser)context.Data["ToDoUser"], context.Data["ToDoName"].ToString(), deadline, null, ct);
                         await bot.SendMessage(update.Message.Chat.Id, "Задача добавлена", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.DefaultKeyboard, cancellationToken: ct);
                         return ScenarioResult.Completed;
                     }

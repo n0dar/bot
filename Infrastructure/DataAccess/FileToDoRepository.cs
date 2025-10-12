@@ -1,6 +1,7 @@
 ﻿using bot.Core.DataAccess;
 using bot.Core.Entities;
 using bot.Core.Exceptions;
+using bot.TelegramBot;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -23,14 +24,6 @@ namespace bot.Infrastructure.DataAccess
             Directory.CreateDirectory(_path);
             _indexFilePath = System.IO.Path.Combine(_path, "index.json");
         }
-        private static async Task<string> ObjestToJsonStringAsync(object obj, CancellationToken ct)
-        {
-            await using MemoryStream jsonStream = new();
-            await JsonSerializer.SerializeAsync(jsonStream, obj, cancellationToken: ct);
-            jsonStream.Position = 0;
-            using StreamReader jsonStreamReader = new(jsonStream, Encoding.UTF8);
-            return await jsonStreamReader.ReadToEndAsync(ct);
-        }
         private async Task BuildIndexAsync(CancellationToken ct)
         {
             IEnumerable<string> files = Directory
@@ -46,23 +39,21 @@ namespace bot.Infrastructure.DataAccess
                     ToDoItem item = await JsonSerializer.DeserializeAsync<ToDoItem>(jsonFileStream, cancellationToken: ct);
                     index.Add(item.Id, item.User.UserId);
                 }
-                await File.WriteAllTextAsync(_indexFilePath, await ObjestToJsonStringAsync(index, ct), ct);
+                await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync(index, ct), ct);
             }
         }
         private async Task<Dictionary<Guid, Guid>> ReadIndexAsync(CancellationToken ct)
         {
             if (File.Exists(_indexFilePath))
             {
-                using (FileStream jsonFileStream = File.OpenRead(_indexFilePath))
-                {
-                    return await JsonSerializer.DeserializeAsync<Dictionary<Guid, Guid>>(jsonFileStream, cancellationToken: ct);
-                }
+                using FileStream jsonFileStream = File.OpenRead(_indexFilePath);
+                return await JsonSerializer.DeserializeAsync<Dictionary<Guid, Guid>>(jsonFileStream, cancellationToken: ct);
             }
             return null;
         }
         private async Task UpdateIndexAsync(Dictionary<Guid, Guid> index, CancellationToken ct)
         {
-            await File.WriteAllTextAsync(_indexFilePath, await ObjestToJsonStringAsync(index, ct), ct);
+            await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync(index, ct), ct);
         }
         private async Task<IReadOnlyList<ToDoItem>> GetItemsAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct)
         {
@@ -82,7 +73,7 @@ namespace bot.Infrastructure.DataAccess
         async Task IToDoRepository.AddAsync(ToDoItem item, CancellationToken ct)
         {
             Directory.CreateDirectory(Path.Combine(_path, $"{item.User.UserId}"));
-            await File.WriteAllTextAsync(Path.Combine(_path, $"{item.User.UserId}", $"{item.Id}.json"), await ObjestToJsonStringAsync(item, ct), ct);
+            await File.WriteAllTextAsync(Path.Combine(_path, $"{item.User.UserId}", $"{item.Id}.json"), await Utils.ObjestToJsonStringAsync(item, ct), ct);
             if (File.Exists(_indexFilePath))
             {
                 Dictionary<Guid, Guid> index = await ReadIndexAsync(ct);
@@ -159,7 +150,7 @@ namespace bot.Infrastructure.DataAccess
         async Task IToDoRepository.UpdateAsync(ToDoItem item, CancellationToken ct)
         {
             Directory.CreateDirectory(Path.Combine(_path, $"{item.User.UserId}"));
-            await File.WriteAllTextAsync(Path.Combine(_path, $"{item.User.UserId}", $"{item.Id}.json"), await ObjestToJsonStringAsync(item, ct), ct);
+            await File.WriteAllTextAsync(Path.Combine(_path, $"{item.User.UserId}", $"{item.Id}.json"), await Utils.ObjestToJsonStringAsync(item, ct), ct);
         }
     }
 }

@@ -1,16 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json.Serialization;
 
 namespace bot.Core.Entities
 {
-    public class ToDoList
+    public class ToDoList(string Name, ToDoUser User)
     {
-        Guid Id { get; set; }
-        string Name {  get; set; }
-        ToDoUser User {  get; set; }
-        DateTime CreatedAt {  get; set; }
+        [JsonConstructor]
+        public ToDoList(string Name, ToDoUser User, DateTime CreatedAt) : this(Name, User)
+        {
+            this.Name = Name;
+            this.User = User;
+            this.CreatedAt = CreatedAt;
+        }
+        public Guid Id { get; } = Guid.NewGuid();
+        public string Name { get; } = Name;
+        public ToDoUser User { get; } = User;
+        public DateTime CreatedAt {  get; } = DateTime.UtcNow;
     }
 }

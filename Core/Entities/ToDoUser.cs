@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace bot.Core.Entities
 {
-    internal class ToDoUser(long telegramUserId, string telegramUserName)
+    public class ToDoUser(long telegramUserId, string telegramUserName)
     {
         [JsonConstructor]
         public ToDoUser(long telegramUserId, string telegramUserName, DateTime registeredAt) : this(telegramUserId, telegramUserName)
@@ -12,7 +12,7 @@ namespace bot.Core.Entities
             this.TelegramUserName = telegramUserName;
             this.RegisteredAt = registeredAt;
         }
-        public Guid UserId { get; set; } = Guid.NewGuid();
+        public Guid UserId { get;} = Guid.NewGuid();
         public long TelegramUserId { get; } = telegramUserId;
         public string TelegramUserName { get; } = telegramUserName;
         public DateTime RegisteredAt { get; } = DateTime.UtcNow;

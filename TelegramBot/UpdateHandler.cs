@@ -16,7 +16,7 @@ using Telegram.Bot.Types;
 
 namespace bot
 {
-    internal class UpdateHandler(IUserService UserService, IToDoService ToDoService, IToDoReportService ToDoReportService, IEnumerable<IScenario> Scenarios, IScenarioContextRepository ContextRepository, CancellationToken CT) : IUpdateHandler
+    internal class UpdateHandler(IUserService UserService, IToDoService ToDoService, IToDoReportService ToDoReportService, IEnumerable<IScenario> Scenarios, IScenarioContextRepository ContextRepository, IToDoListService ToDoListService, CancellationToken CT) : IUpdateHandler
     {
         private ITelegramBotClient _botClient;
         private readonly IUserService _userService = UserService;
@@ -68,13 +68,13 @@ namespace bot
             StringBuilder message = new();
             if (toDoItemList.Count > 0)
             {
-                message.AppendLine($"Список{(command == "/showtasks" ? " активных " : " ")}задач:");
+                message.AppendLine($"Список{(command == "/show" ? " активных " : " ")}задач:");
                 foreach (ToDoItem item in toDoItemList)
                 {
                     message.AppendLine(item.ToString());
                 }
             }
-            else message.AppendLine($"Список{(command == "/showtasks" ? " активных " : " ")}задач пуст"); 
+            else message.AppendLine($"Список{(command == "/show" ? " активных " : " ")}задач пуст"); 
             return message.ToString();
         }
         private async Task Start(Update update)
@@ -123,14 +123,11 @@ namespace bot
                         case "/addtask" when toDoUser != null:
                             await ProcessScenario(new ScenarioContext(ScenarioType.AddTask), update, cancellationToken);
                         break;
-                        case "/showalltasks" when toDoUser != null:
-                            await botClient.SendMessage(update.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.GetAllByUserIdAsync(toDoUser.UserId, cancellationToken), command), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
-                            break;
-                        case "/showtasks" when toDoUser != null:
-                            await botClient.SendMessage(update.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.GetActiveByUserIdAsync(toDoUser.UserId, cancellationToken), command), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
+                        case "/show" when toDoUser != null:
+                            await botClient.SendMessage(update.Message.Chat.Id, "Выберите список", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.ShowKeyboard(await ToDoListService.GetUserListsAsync(toDoUser.UserId, cancellationToken)), cancellationToken: cancellationToken);
                             break;
                         case "/find" when toDoUser != null && commandParam != null:
-                            await botClient.SendMessage(update.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.FindAsync(toDoUser, commandParam, cancellationToken), "/showtasks"), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
+                            await botClient.SendMessage(update.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.FindAsync(toDoUser, commandParam, cancellationToken), "/show"), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
                             break;
                         case "/removetask" when toDoUser != null && commandParam != null:
                             if (Guid.TryParse(commandParam, out taskId))

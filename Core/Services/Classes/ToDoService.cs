@@ -5,6 +5,7 @@ using bot.Core.Exceptions;
 using bot.Core.Services.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static bot.Core.Entities.ToDoItem;
@@ -51,6 +52,12 @@ namespace bot.Core.Services.Classes
                 await toDoRepository.UpdateAsync(toDoItem, ct);
             }
             else throw new TaskDoesNotExistException("Активная задача с таким GUID не существует");
+        }
+        async Task<IReadOnlyList<ToDoItem>> IToDoService.GetByUserIdAndList(Guid userId, Guid? listId, CancellationToken ct)
+        {
+            IReadOnlyList<ToDoItem> res = await GetAllByUserIdAsync(userId, ct);
+            if (res.Any() && listId != null) res = [.. res.Where(res => res.List.Id == listId)];
+            return res;
         }
     }
 }
