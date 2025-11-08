@@ -53,11 +53,16 @@ namespace bot.Core.Services.Classes
             }
             else throw new TaskDoesNotExistException("Активная задача с таким GUID не существует");
         }
-        async Task<IReadOnlyList<ToDoItem>> IToDoService.GetByUserIdAndList(Guid userId, Guid? listId, CancellationToken ct)
+        public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct)
         {
-            IReadOnlyList<ToDoItem> res = await GetAllByUserIdAsync(userId, ct);
-            if (res.Any() && listId != null) res = [.. res.Where(res => res.List.Id == listId)];
-            return res;
+            IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
+            if (listId == null) toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List == null)];
+            else
+            { 
+                toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List != null).Where(toDoItems => toDoItems.List.Id == listId)];
+                //toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List.Id == listId)];
+            }
+            return toDoItems;
         }
     }
 }

@@ -17,6 +17,6 @@ namespace bot.Core.Services.Interfaces
         Task DeleteAsync(Guid id, CancellationToken ct);
         //Возвращает все задачи пользователя, которые начинаются на namePrefix
         Task<IReadOnlyList<ToDoItem>> FindAsync(ToDoUser user, string namePrefix, CancellationToken ct);
-        Task<IReadOnlyList<ToDoItem>> GetByUserIdAndList(Guid userId, Guid? listId, CancellationToken ct);
+        Task<IReadOnlyList<ToDoItem>> GetByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct);
     }
 }

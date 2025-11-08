@@ -1,6 +1,7 @@
 ﻿using bot.Core.Entities;
 using bot.TelegramBot.DTO;
 using System.Collections.Generic;
+using System.Linq;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace bot.TelegramBot
@@ -22,24 +23,23 @@ namespace bot.TelegramBot
             ResizeKeyboard = true
         };
 
-        //readonly static ToDoListCallbackDto toDoListCallbackDto = new();
-
-        public static InlineKeyboardMarkup ShowKeyboard(IReadOnlyList<ToDoList> toDoList)
+        public static InlineKeyboardMarkup ToDoListKeyboard(IReadOnlyList<ToDoList> toDoList)
         {
             InlineKeyboardMarkup showKeyboard = new();
-            showKeyboard.AddButton(InlineKeyboardButton.WithCallbackData("📌Без списка", "ToDoListCallbackDto(\"show\").ToString()"));
+
+            showKeyboard.AddButton(InlineKeyboardButton.WithCallbackData("📌Без списка", (new ToDoListCallbackDto() { Action = "show"}).ToString()));
             foreach (ToDoList item in toDoList)
             {
                 showKeyboard.AddNewRow
                 ([
-                    InlineKeyboardButton.WithCallbackData($"{item.Name}", $"ToDoListCallbackDto(\"show|{item.Id}\").ToString()"),
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "show", ToDoListId=item.Id}).ToString())
                 ]);
             }
 
             showKeyboard.AddNewRow
             ([
-                    InlineKeyboardButton.WithCallbackData("🆕Добавить", "ToDoListCallbackDto(\"addlist\").ToString()"),
-                    InlineKeyboardButton.WithCallbackData("❌Удалить", "ToDoListCallbackDto(\"deletelist\").ToString()")
+                    InlineKeyboardButton.WithCallbackData("🆕Добавить", (new ToDoListCallbackDto() { Action = "addlist" }).ToString()),
+                    InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoListCallbackDto() { Action = "deletelist" }).ToString())
             ]);
             return showKeyboard;
         }

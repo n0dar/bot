@@ -72,7 +72,7 @@ namespace bot
                     
                     var receiverOptions = new ReceiverOptions
                     {
-                        AllowedUpdates = [UpdateType.Message],
+                        AllowedUpdates = [UpdateType.Message, UpdateType.CallbackQuery],
                         DropPendingUpdates = true
                     };
                     botClient.StartReceiving(updateHandler, receiverOptions);
