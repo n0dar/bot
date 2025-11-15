@@ -41,24 +41,21 @@ namespace bot
                 UserService userService = new(fileUserRepository);
 
                 FileToDoRepository fileToDoRepository = new("ToDoRepository");
-
                 ToDoService toDoService = new(fileToDoRepository);
-
                 ToDoReportService toDoReportService = new(fileToDoRepository);
 
-                using CancellationTokenSource cts = new();
+                FileToDoListRepository fileToListDoRepository = new("ToDoListRepository");
+                ToDoListService toDoListService = new(fileToListDoRepository);
 
                 IEnumerable<IScenario> scenerios =
                 [
-                    new AddTaskScenario(userService, toDoService)
+                    new AddTaskScenario(userService, toDoService),
+                    new AddListScenario(userService, toDoListService),
+                    new DeleteListScenario(userService, toDoListService, toDoService)
                 ];
-
                 InMemoryScenarioContextRepository contextRepository = new();
 
-
-                FileToDoListRepository fileToDoListRepository = new("ToDoListRepository");
-                ToDoListService toDoListService = new(fileToDoListRepository);
-
+                using CancellationTokenSource cts = new();
 
                 UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, scenerios, contextRepository, toDoListService, cts.Token);
 

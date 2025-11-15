@@ -6,7 +6,9 @@ namespace bot.TelegramBot.Scenarios
     public enum ScenarioType
     {
         None,
-        AddTask
+        AddTask,
+        AddList,
+        DeleteList
     }
     public class ScenarioContext(ScenarioType scenario)
     {

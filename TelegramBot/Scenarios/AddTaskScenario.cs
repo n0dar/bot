@@ -22,13 +22,13 @@ namespace bot.TelegramBot.Scenarios
             {
                 case null:
                     context.Data["ToDoUser"] = await _userService.GetUserAsync(update.Message.From.Id, ct);
-                    context.CurrentStep = "Name";
                     await bot.SendMessage(update.Message.Chat.Id, "Введите название задачи:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
+                    context.CurrentStep = "Name";
                     return ScenarioResult.Transition;
                 case "Name":
                     context.Data["ToDoName"] = update.Message.Text;
-                    context.CurrentStep = "Deadline";
                     await bot.SendMessage(update.Message.Chat.Id, "Введите дэдлайн задачи (в формате dd.MM.yyyy):", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
+                    context.CurrentStep = "Deadline";
                     return ScenarioResult.Transition;
                 default:
                     if (DateOnly.TryParseExact(update.Message.Text, "dd.MM.yyyy", out DateOnly deadline))

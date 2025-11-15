@@ -1,7 +1,6 @@
 ﻿using bot.Core.Entities;
 using bot.TelegramBot.DTO;
 using System.Collections.Generic;
-using System.Linq;
 using Telegram.Bot.Types.ReplyMarkups;
 
 namespace bot.TelegramBot
@@ -12,18 +11,15 @@ namespace bot.TelegramBot
         {
             ResizeKeyboard = true
         };
-
         public static ReplyKeyboardMarkup CancelKeyboard = new(new KeyboardButton("/cancel"))
         {
             ResizeKeyboard = true
         };
-
         public static ReplyKeyboardMarkup StartKeyboard = new(new KeyboardButton("/start"))
         {
             ResizeKeyboard = true
         };
-
-        public static InlineKeyboardMarkup ToDoListKeyboard(IReadOnlyList<ToDoList> toDoList)
+        public static InlineKeyboardMarkup ShowToDoListKeyboard(IReadOnlyList<ToDoList> toDoList)
         {
             InlineKeyboardMarkup showKeyboard = new();
 
@@ -38,14 +34,36 @@ namespace bot.TelegramBot
 
             showKeyboard.AddNewRow
             ([
-                    InlineKeyboardButton.WithCallbackData("🆕Добавить", (new ToDoListCallbackDto() { Action = "addlist" }).ToString()),
-                    InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoListCallbackDto() { Action = "deletelist" }).ToString())
+                InlineKeyboardButton.WithCallbackData("🆕Добавить", (new ToDoListCallbackDto() { Action = "addlist" }).ToString()),
+                InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoListCallbackDto() { Action = "deletelist" }).ToString())
+            ]);
+            return showKeyboard;
+        }
+        public static InlineKeyboardMarkup DeleteToDoListKeyboard(IReadOnlyList<ToDoList> toDoList)
+        {
+            InlineKeyboardMarkup deleteKeyboard = new();
+
+            foreach (ToDoList item in toDoList)
+            {
+                deleteKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "deletelist", ToDoListId=item.Id}).ToString())
+                ]);
+            }
+            return deleteKeyboard;
+        }
+        public static InlineKeyboardMarkup YesNoKeyboard()
+        {
+            InlineKeyboardMarkup showKeyboard = new();
+            showKeyboard.AddNewRow
+            ([
+                InlineKeyboardButton.WithCallbackData("✅Да", (new ToDoListCallbackDto() { Action = "yes"}).ToString()),
+                InlineKeyboardButton.WithCallbackData("❌Нет", (new ToDoListCallbackDto() { Action = "no"}).ToString())
+                //InlineKeyboardButton.WithCallbackData("✅Да", "yes"),
+                //InlineKeyboardButton.WithCallbackData("❌Нет", "no")
+
             ]);
             return showKeyboard;
         }
     }
-
-
-
-
 }

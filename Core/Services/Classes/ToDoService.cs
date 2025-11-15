@@ -64,5 +64,15 @@ namespace bot.Core.Services.Classes
             }
             return toDoItems;
         }
+        public async Task<int> DeleteByUserIdAndListAsync(Guid userId, Guid listId, CancellationToken ct)
+        {
+            IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
+            toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List != null).Where(toDoItems => toDoItems.List.Id == listId)];
+            foreach (ToDoItem item in toDoItems)
+            {
+                await DeleteAsync(item.Id, ct);
+            }
+            return toDoItems.Count;
+        }
     }
 }
