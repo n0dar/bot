@@ -49,7 +49,7 @@ namespace bot
 
                 IEnumerable<IScenario> scenerios =
                 [
-                    new AddTaskScenario(userService, toDoService),
+                    new AddTaskScenario(userService, toDoListService, toDoService),
                     new AddListScenario(userService, toDoListService),
                     new DeleteListScenario(userService, toDoListService, toDoService)
                 ];

@@ -23,6 +23,8 @@ namespace bot
         private readonly IUserService _userService = UserService;
         private readonly IToDoService _toDoService = ToDoService;
         private readonly IToDoReportService _toDoReportService = ToDoReportService;
+        private readonly IToDoListService _toDoListService = ToDoListService;
+
         private readonly CancellationToken _ct = CT;
 
         public delegate void MessageEventHandler(string message);
@@ -109,34 +111,46 @@ namespace bot
                 switch (toDoListCallbackDto.Action)
                 {
                     case "show":
-                        await _botClient.SendMessage(callbackQuery.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.GetByUserIdAndListAsync(toDoUser.UserId, toDoListCallbackDto.ToDoListId, ct), "/showalltasks"), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
+                        if (scenarioContext == null) await _botClient.SendMessage(callbackQuery.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.GetByUserIdAndListAsync(toDoUser.UserId, toDoListCallbackDto.ToDoListId, ct), "/showalltasks"), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
                         break;
                     case "addlist":
-                        await ProcessScenario(new ScenarioContext(ScenarioType.AddList), update, ct);
+                        if (scenarioContext == null) await ProcessScenario(new ScenarioContext(ScenarioType.AddList), update, ct);
                         break;
                     case "deletelist":
-                        if (scenarioContext != null)
-                        {
-                            scenarioContext.Data["ToDoList"] = toDoListCallbackDto.ToDoListId;
+                        if (scenarioContext == null)
+                        { 
+                            scenarioContext = new ScenarioContext(ScenarioType.DeleteList);
                             await ProcessScenario(scenarioContext, update, ct);
                         }
-                        else await ProcessScenario(new ScenarioContext(ScenarioType.DeleteList), update, ct);
+                        break;
+                    case "deletelistbyid":
+                        if (scenarioContext?.CurrentScenario.ToString() == "DeleteList" && scenarioContext?.CurrentStep == "Approve")
+                        { 
+                            scenarioContext.Data["ToDoList"] = await _toDoListService.GetAsync((Guid)toDoListCallbackDto.ToDoListId, ct);
+                            await ProcessScenario(scenarioContext, update, ct);
+                        }
                         break;
                     case "yes":
-                        if (scenarioContext != null)
+                        if (scenarioContext?.CurrentScenario.ToString() == "DeleteList" && scenarioContext?.CurrentStep == "Delete")
                         {
                             scenarioContext.Data["Approve"] = toDoListCallbackDto.Action;
                             await ProcessScenario(scenarioContext, update, ct);
                         }
                         break;
                     case "no":
-                        if (scenarioContext != null)
+                        if (scenarioContext?.CurrentScenario.ToString() == "DeleteList" && scenarioContext?.CurrentStep == "Delete")
                         {
                             scenarioContext.Data["Approve"] = toDoListCallbackDto.Action;
                             await ProcessScenario(scenarioContext, update, ct);
                         }
                         break;
-
+                    case "addtask":
+                        if (scenarioContext?.CurrentScenario.ToString() == "AddTask" && scenarioContext?.CurrentStep == "AddTask")
+                        {
+                            scenarioContext.Data["ToDoList"] = await _toDoListService.GetAsync((Guid)toDoListCallbackDto.ToDoListId, ct);
+                            await ProcessScenario(scenarioContext, update, ct);
+                        }
+                        break;
                 }
             }
             await ((TelegramBotClient)_botClient).AnswerCallbackQuery(callbackQuery.Id, cancellationToken: ct);
@@ -168,7 +182,7 @@ namespace bot
                         await ProcessScenario(new ScenarioContext(ScenarioType.AddTask), update, cancellationToken);
                         break;
                     case "/show" when toDoUser != null:
-                        await _botClient.SendMessage(update.Message.Chat.Id, "Выберите список", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.ShowToDoListKeyboard(await ToDoListService.GetUserListsAsync(toDoUser.UserId, cancellationToken)), cancellationToken: cancellationToken);
+                        await _botClient.SendMessage(update.Message.Chat.Id, "Выберите список", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.ShowToDoListKeyboard(await _toDoListService.GetUserListsAsync(toDoUser.UserId, cancellationToken)), cancellationToken: cancellationToken);
                         break;
                     case "/find" when toDoUser != null && commandParam != null:
                         await _botClient.SendMessage(update.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.FindAsync(toDoUser, commandParam, cancellationToken), "/show"), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);

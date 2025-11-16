@@ -47,11 +47,25 @@ namespace bot.TelegramBot
             {
                 deleteKeyboard.AddNewRow
                 ([
-                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "deletelist", ToDoListId=item.Id}).ToString())
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "deletelistbyid", ToDoListId=item.Id}).ToString())
                 ]);
             }
             return deleteKeyboard;
         }
+        public static InlineKeyboardMarkup AddTaskToDoListKeyboard(IReadOnlyList<ToDoList> toDoList)
+        {
+            InlineKeyboardMarkup addTaskKeyboard = new();
+
+            foreach (ToDoList item in toDoList)
+            {
+                addTaskKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "addtask", ToDoListId=item.Id}).ToString())
+                ]);
+            }
+            return addTaskKeyboard;
+        }
+
         public static InlineKeyboardMarkup YesNoKeyboard()
         {
             InlineKeyboardMarkup showKeyboard = new();
