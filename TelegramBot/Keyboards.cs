@@ -73,9 +73,6 @@ namespace bot.TelegramBot
             ([
                 InlineKeyboardButton.WithCallbackData("✅Да", (new ToDoListCallbackDto() { Action = "yes"}).ToString()),
                 InlineKeyboardButton.WithCallbackData("❌Нет", (new ToDoListCallbackDto() { Action = "no"}).ToString())
-                //InlineKeyboardButton.WithCallbackData("✅Да", "yes"),
-                //InlineKeyboardButton.WithCallbackData("❌Нет", "no")
-
             ]);
             return showKeyboard;
         }
