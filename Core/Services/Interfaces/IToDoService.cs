@@ -18,5 +18,6 @@ namespace bot.Core.Services.Interfaces
         //Возвращает все задачи пользователя, которые начинаются на namePrefix
         Task<IReadOnlyList<ToDoItem>> FindAsync(ToDoUser user, string namePrefix, CancellationToken ct);
         Task<IReadOnlyList<ToDoItem>> GetByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct);
+        Task<ToDoItem?> GetAsync(Guid toDoItemId, CancellationToken ct);
     }
 }

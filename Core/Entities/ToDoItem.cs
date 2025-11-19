@@ -6,14 +6,14 @@ namespace bot.Core.Entities
 {
     internal class ToDoItem(ToDoUser user, string name, DateOnly deadline, ToDoList? list)
     {
-        [JsonConstructor]
-        public ToDoItem(Guid id, ToDoUser user, string name, DateOnly deadline, ToDoList? list) : this(user, name, deadline, list)
-        {
-            this.Id = id;
-            this.User= user;
-            this.Name = name;
-            this.Deadline = deadline;
-        }
+        //[JsonConstructor]
+        //public ToDoItem(Guid id, ToDoUser user, string name, DateOnly deadline, ToDoList? list) : this(user, name, deadline, list)
+        //{
+        //    this.Id = id;
+        //    this.User= user;
+        //    this.Name = name;
+        //    this.Deadline = deadline;
+        //}
         public enum ToDoItemState
         {
             Active,

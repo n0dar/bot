@@ -1,5 +1,6 @@
 ﻿using bot.Core.Entities;
 using bot.TelegramBot.DTO;
+using System;
 using System.Collections.Generic;
 using Telegram.Bot.Types.ReplyMarkups;
 
@@ -73,6 +74,32 @@ namespace bot.TelegramBot
             ([
                 InlineKeyboardButton.WithCallbackData("✅Да", (new ToDoListCallbackDto() { Action = "yes"}).ToString()),
                 InlineKeyboardButton.WithCallbackData("❌Нет", (new ToDoListCallbackDto() { Action = "no"}).ToString())
+            ]);
+            return showKeyboard;
+        }
+
+        public static InlineKeyboardMarkup ShowToDoItemsKeyboard(IReadOnlyList<ToDoItem> toDoItems)
+        {
+            InlineKeyboardMarkup showToDoItemsKeyboard = new();
+
+            foreach (ToDoItem item in toDoItems)
+            {
+                showToDoItemsKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "showtask", ToDoListId=item.Id}).ToString())
+                ]);
+            }
+            return showToDoItemsKeyboard;
+        }
+
+
+        public static InlineKeyboardMarkup CompleteDeleteTaskKeyboard(Guid id)
+        {
+            InlineKeyboardMarkup showKeyboard = new();
+            showKeyboard.AddNewRow
+            ([
+                InlineKeyboardButton.WithCallbackData("✅Выполнить", (new ToDoItemCallbackDto() { Action = "completetask", ToDoItemId = id }).ToString()),
+                InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoItemCallbackDto() { Action = "deletetask", ToDoItemId = id }).ToString()),
             ]);
             return showKeyboard;
         }

@@ -1,6 +1,4 @@
-﻿using bot.Core.Entities;
-using bot.Core.Services.Classes;
-using bot.Core.Services.Interfaces;
+﻿using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
 using bot.TelegramBot.Scenarios;
 using System;
@@ -51,7 +49,8 @@ namespace bot
                 [
                     new AddTaskScenario(userService, toDoListService, toDoService),
                     new AddListScenario(userService, toDoListService),
-                    new DeleteListScenario(userService, toDoListService, toDoService)
+                    new DeleteListScenario(userService, toDoListService, toDoService),
+                    new ProcessTaskScenario(userService)
                 ];
                 InMemoryScenarioContextRepository contextRepository = new();
 

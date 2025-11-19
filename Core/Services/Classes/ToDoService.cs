@@ -74,5 +74,10 @@ namespace bot.Core.Services.Classes
             }
             return toDoItems.Count;
         }
+
+        public async Task<ToDoItem?> GetAsync(Guid toDoItemId, CancellationToken ct)
+        {
+            return await toDoRepository.GetAsync(toDoItemId, ct);
+        }
     }
 }
