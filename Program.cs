@@ -1,6 +1,4 @@
-﻿using bot.Core.Entities;
-using bot.Core.Services.Classes;
-using bot.Core.Services.Interfaces;
+﻿using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
 using bot.TelegramBot.Scenarios;
 using System;

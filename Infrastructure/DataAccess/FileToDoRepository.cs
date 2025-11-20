@@ -39,7 +39,7 @@ namespace bot.Infrastructure.DataAccess
                     ToDoItem item = await JsonSerializer.DeserializeAsync<ToDoItem>(jsonFileStream, cancellationToken: ct);
                     index.Add(item.Id, item.User.UserId);
                 }
-                await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync(index, ct), ct);
+                await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync<Dictionary<Guid, Guid>>(index, ct), ct);
             }
         }
         private async Task<Dictionary<Guid, Guid>> ReadIndexAsync(CancellationToken ct)
@@ -53,7 +53,7 @@ namespace bot.Infrastructure.DataAccess
         }
         private async Task UpdateIndexAsync(Dictionary<Guid, Guid> index, CancellationToken ct)
         {
-            await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync(index, ct), ct);
+            await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync<Dictionary<Guid, Guid>>(index, ct), ct);
         }
         private async Task<IReadOnlyList<ToDoItem>> GetItemsAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct)
         {
@@ -73,7 +73,7 @@ namespace bot.Infrastructure.DataAccess
         async Task IToDoRepository.AddAsync(ToDoItem item, CancellationToken ct)
         {
             Directory.CreateDirectory(Path.Combine(_path, $"{item.User.UserId}"));
-            await File.WriteAllTextAsync(Path.Combine(_path, $"{item.User.UserId}", $"{item.Id}.json"), await Utils.ObjestToJsonStringAsync(item, ct), ct);
+            await File.WriteAllTextAsync(Path.Combine(_path, $"{item.User.UserId}", $"{item.Id}.json"), await Utils.ObjestToJsonStringAsync<ToDoItem>(item, ct), ct);
             if (File.Exists(_indexFilePath))
             {
                 Dictionary<Guid, Guid> index = await ReadIndexAsync(ct);
@@ -150,7 +150,7 @@ namespace bot.Infrastructure.DataAccess
         async Task IToDoRepository.UpdateAsync(ToDoItem item, CancellationToken ct)
         {
             Directory.CreateDirectory(Path.Combine(_path, $"{item.User.UserId}"));
-            await File.WriteAllTextAsync(Path.Combine(_path, $"{item.User.UserId}", $"{item.Id}.json"), await Utils.ObjestToJsonStringAsync(item, ct), ct);
+            await File.WriteAllTextAsync(Path.Combine(_path, $"{item.User.UserId}", $"{item.Id}.json"), await Utils.ObjestToJsonStringAsync<ToDoItem>(item, ct), ct);
         }
     }
 }
