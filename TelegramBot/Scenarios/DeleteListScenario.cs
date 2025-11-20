@@ -12,10 +12,6 @@ namespace bot.TelegramBot.Scenarios
 {
     internal class DeleteListScenario(IUserService UserService, IToDoListService ToDoListService, IToDoService ToDoService) : IScenario
     {
-        private readonly IUserService _userService = UserService;
-        private readonly IToDoListService _toDoListService = ToDoListService;
-        private readonly IToDoService _toDoService = ToDoService;
-
         bool IScenario.CanHandle(ScenarioType scenario)
         {
             return scenario == ScenarioType.DeleteList;
@@ -25,8 +21,8 @@ namespace bot.TelegramBot.Scenarios
             switch (context.CurrentStep)
             {
                 case null:
-                    context.Data["ToDoUser"] = await _userService.GetUserAsync(update.CallbackQuery.From.Id, ct);
-                    IReadOnlyList<ToDoList> toDoLists = await _toDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
+                    context.Data["ToDoUser"] = await UserService.GetUserAsync(update.CallbackQuery.From.Id, ct);
+                    IReadOnlyList<ToDoList> toDoLists = await ToDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
                     if (toDoLists.Any())
                     {
                         Message sentMessage  = await bot.SendMessage(update.CallbackQuery.Message.Chat.Id, "Выберете список для удаления:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.DeleteToDoListKeyboard(toDoLists), cancellationToken: ct);
@@ -41,8 +37,8 @@ namespace bot.TelegramBot.Scenarios
                 default:
                     if (context.Data["Approve"].ToString() == "yes")
                     {
-                        int deltededToDoCount = await ((ToDoService)_toDoService).DeleteByUserIdAndListAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ((ToDoList)context.Data["ToDoList"]).Id, ct);
-                        await _toDoListService.DeleteAsync(((ToDoList)context.Data["ToDoList"]).Id, ct);
+                        int deltededToDoCount = await ((ToDoService)ToDoService).DeleteByUserIdAndListAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ((ToDoList)context.Data["ToDoList"]).Id, ct);
+                        await ToDoListService.DeleteAsync(((ToDoList)context.Data["ToDoList"]).Id, ct);
                         await bot.SendMessage(update.CallbackQuery.Message.Chat.Id, $"Список и его задачи в количестве {deltededToDoCount} шт. удалены.)  ", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
                         return ScenarioResult.Completed;
                     }

@@ -1,7 +1,5 @@
 ﻿using bot.Core.Entities;
-using bot.Core.Services.Classes;
 using bot.Core.Services.Interfaces;
-using bot.TelegramBot.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,10 +12,6 @@ namespace bot.TelegramBot.Scenarios
 {
     internal class AddTaskScenario(IUserService UserService, IToDoListService ToDoListService, IToDoService ToDoService) : IScenario
     {
-        private readonly IUserService _userService = UserService;
-        private readonly IToDoListService _toDoListService = ToDoListService;
-        private readonly IToDoService _toDoService = ToDoService;
-
         bool IScenario.CanHandle(ScenarioType scenario)
         {
             return scenario == ScenarioType.AddTask;
@@ -28,8 +22,8 @@ namespace bot.TelegramBot.Scenarios
             switch (context.CurrentStep)
             {
                 case null:
-                    context.Data["ToDoUser"] = await _userService.GetUserAsync(update.Message.From.Id, ct);
-                    toDoLists = await _toDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
+                    context.Data["ToDoUser"] = await UserService.GetUserAsync(update.Message.From.Id, ct);
+                    toDoLists = await ToDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
                     if (toDoLists.Any())
                     {
                         await bot.SendMessage(update.Message.Chat.Id, "Выберете список:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.AddTaskToDoListKeyboard(toDoLists), cancellationToken: ct);
@@ -41,12 +35,12 @@ namespace bot.TelegramBot.Scenarios
                     context.CurrentStep = "AddTask";
                     return ScenarioResult.Transition;
                 case "AddTask":
-                    toDoLists = await _toDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
+                    toDoLists = await ToDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
                     if (toDoLists.Any()) { }
                     else
                     {
-                        await _toDoListService.AddAsync((ToDoUser)context.Data["ToDoUser"], update.Message.Text, ct);
-                        toDoLists = await _toDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
+                        await ToDoListService.AddAsync((ToDoUser)context.Data["ToDoUser"], update.Message.Text, ct);
+                        toDoLists = await ToDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
                         context.Data["ToDoList"] = toDoLists[0];
                     }
                     await bot.SendMessage((update.Message ?? update.CallbackQuery.Message).Chat.Id, "Введите название задачи:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
@@ -61,7 +55,7 @@ namespace bot.TelegramBot.Scenarios
                     if (DateOnly.TryParseExact(update.Message.Text, "dd.MM.yyyy", out DateOnly deadline))
                     {
                         context.Data["ToDoDeadline"] = update.Message.Text;
-                        await _toDoService.AddAsync((ToDoUser)context.Data["ToDoUser"], context.Data["ToDoName"].ToString(), DateOnly.Parse(context.Data["ToDoDeadline"].ToString()), (ToDoList)context.Data["ToDoList"], ct);
+                        await ToDoService.AddAsync((ToDoUser)context.Data["ToDoUser"], context.Data["ToDoName"].ToString(), DateOnly.Parse(context.Data["ToDoDeadline"].ToString()), (ToDoList)context.Data["ToDoList"], ct);
                         await bot.SendMessage(update.Message.Chat.Id, "Задача добавлена", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.DefaultKeyboard, cancellationToken: ct);
                         return ScenarioResult.Completed;
                     }
