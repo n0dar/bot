@@ -5,6 +5,7 @@ using bot.Core.Exceptions;
 using bot.Core.Services.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static bot.Core.Entities.ToDoItem;
@@ -15,13 +16,13 @@ namespace bot.Core.Services.Classes
     {
         private readonly int _taskCountLimit = 100;
         private readonly int _taskLengthLimit = 100;
-        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, DateOnly deadline, CancellationToken ct)
+        public async Task<ToDoItem> AddAsync(ToDoUser user, string name, DateOnly deadline, ToDoList? list, CancellationToken ct)
         {
             int countActive = await toDoRepository.CountActiveAsync(user.UserId, ct);
             if (countActive == _taskCountLimit) throw new TaskCountLimitException(_taskCountLimit);
             if (name.Length > _taskLengthLimit) throw new TaskLengthLimitException(name.Length, _taskLengthLimit);
             if (await toDoRepository.ExistsByNameAsync(user.UserId, name, ct)) throw new DuplicateTaskException(name);
-            ToDoItem ToDoItem = new(user, name, deadline);
+            ToDoItem ToDoItem = new(user, name, deadline, list);
             await toDoRepository.AddAsync(ToDoItem, ct);
             return ToDoItem;
         }
@@ -51,6 +52,23 @@ namespace bot.Core.Services.Classes
                 await toDoRepository.UpdateAsync(toDoItem, ct);
             }
             else throw new TaskDoesNotExistException("Активная задача с таким GUID не существует");
+        }
+        public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct)
+        {
+            IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
+            if (listId == null) toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List == null)];
+            else toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List?.Id == listId)];
+            return toDoItems;
+        }
+        public async Task<int> DeleteByUserIdAndListAsync(Guid userId, Guid listId, CancellationToken ct)
+        {
+            IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
+            toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List != null).Where(toDoItems => toDoItems.List.Id == listId)];
+            foreach (ToDoItem item in toDoItems)
+            {
+                await DeleteAsync(item.Id, ct);
+            }
+            return toDoItems.Count;
         }
     }
 }

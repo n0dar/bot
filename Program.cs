@@ -1,6 +1,6 @@
 ﻿using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
-
+using bot.TelegramBot.Scenarios;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,7 +9,6 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using bot.TelegramBot.Scenarios;
 
 namespace bot
 {
@@ -25,10 +24,9 @@ namespace bot
                 [
                     new() { Command = "start", Description = "Старт" },
                     new() { Command = "cancel", Description = "Отменить команду" },
-                    new() { Command = "addtask", Description = "Добавить (укажите имя через пробел)" },
-                    new() { Command = "showalltasks", Description = "Все" },
-                    new() { Command = "showtasks", Description = "Активные" },
-                    new() { Command = "find", Description = "Активные по префиксу (укажите через пробел)" },
+                    new() { Command = "addtask", Description = "Добавить задачу" },
+                    new() { Command = "show", Description = "Показать списки" },
+                    new() { Command = "find", Description = "Активные задачи по префиксу (укажите через пробел)" },
                     new() { Command = "removetask", Description = "Удалить по GUID (укажите через пробел)" },
                     new() { Command = "completetask", Description = "Завершить по GUID (укажите через пробел)" },
                     new() { Command = "report", Description = "Статистика" },
@@ -41,21 +39,23 @@ namespace bot
                 UserService userService = new(fileUserRepository);
 
                 FileToDoRepository fileToDoRepository = new("ToDoRepository");
-
                 ToDoService toDoService = new(fileToDoRepository);
-
                 ToDoReportService toDoReportService = new(fileToDoRepository);
 
-                using CancellationTokenSource cts = new();
+                FileToDoListRepository fileToListDoRepository = new("ToDoListRepository");
+                ToDoListService toDoListService = new(fileToListDoRepository);
 
                 IEnumerable<IScenario> scenerios =
                 [
-                    new AddTaskScenario(userService, toDoService)
+                    new AddTaskScenario(userService, toDoListService, toDoService),
+                    new AddListScenario(userService, toDoListService),
+                    new DeleteListScenario(userService, toDoListService, toDoService)
                 ];
-
                 InMemoryScenarioContextRepository contextRepository = new();
 
-                UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, scenerios, contextRepository, cts.Token);
+                using CancellationTokenSource cts = new();
+
+                UpdateHandler updateHandler = new(userService, toDoService, toDoReportService, scenerios, contextRepository, toDoListService, cts.Token);
 
                 static void startedHandler(string msg) => Console.WriteLine($"Началась обработка сообщения '{msg}'");
                 static void completedHandler(string msg) => Console.WriteLine($"Закончилась обработка сообщения '{msg}'");
@@ -67,7 +67,7 @@ namespace bot
                     
                     var receiverOptions = new ReceiverOptions
                     {
-                        AllowedUpdates = [UpdateType.Message],
+                        AllowedUpdates = [UpdateType.Message, UpdateType.CallbackQuery],
                         DropPendingUpdates = true
                     };
                     botClient.StartReceiving(updateHandler, receiverOptions);

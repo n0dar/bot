@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -6,7 +7,7 @@ namespace bot.TelegramBot.Scenarios
 {
     public class InMemoryScenarioContextRepository : IScenarioContextRepository
     {
-        private readonly Dictionary<long, ScenarioContext> _contextRepository = [];
+        private readonly ConcurrentDictionary<long, ScenarioContext> _contextRepository = [];
         Task<ScenarioContext> IScenarioContextRepository.GetContext(long userId, CancellationToken ct)
         {
             _contextRepository.TryGetValue(userId, out ScenarioContext context);
@@ -14,12 +15,12 @@ namespace bot.TelegramBot.Scenarios
         }
         Task IScenarioContextRepository.ResetContext(long userId, CancellationToken ct)
         {
-            _contextRepository.Remove(userId);
+            _contextRepository.TryRemove(userId, out ScenarioContext value);
             return Task.CompletedTask;
         }
         Task IScenarioContextRepository.SetContext(long userId, ScenarioContext context, CancellationToken ct)
         {
-            _contextRepository[userId] = context;
+            _contextRepository.TryAdd(userId, context);
             return Task.CompletedTask;
         }
     }
