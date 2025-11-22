@@ -57,11 +57,7 @@ namespace bot.Core.Services.Classes
         {
             IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
             if (listId == null) toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List == null)];
-            else
-            { 
-                toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List != null).Where(toDoItems => toDoItems.List.Id == listId)];
-                //toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List.Id == listId)];
-            }
+            else toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List?.Id == listId)];
             return toDoItems;
         }
         public async Task<int> DeleteByUserIdAndListAsync(Guid userId, Guid listId, CancellationToken ct)

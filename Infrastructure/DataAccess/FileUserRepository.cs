@@ -20,7 +20,7 @@ namespace bot.Infrastructure.DataAccess
         }
         async Task IUserRepository.AddAsync(ToDoUser user, CancellationToken ct)
         {
-            await File.WriteAllTextAsync(Path.Combine(_path, $"{user.UserId}.json"), await Utils.ObjestToJsonStringAsync(user, ct), ct);
+            await File.WriteAllTextAsync(Path.Combine(_path, $"{user.UserId}.json"), await Utils.ObjestToJsonStringAsync<ToDoUser>(user, ct), ct);
         }
         Task<ToDoUser> IUserRepository.GetUserAsync(Guid userId, CancellationToken ct)
         {

@@ -8,7 +8,7 @@ namespace bot.TelegramBot
 {
     public static class Utils
     {
-        public static async Task<string> ObjestToJsonStringAsync(object obj, CancellationToken ct)
+        public static async Task<string> ObjestToJsonStringAsync<T>(T obj, CancellationToken ct)
         {
             await using MemoryStream jsonStream = new();
             await JsonSerializer.SerializeAsync(jsonStream, obj, cancellationToken: ct);

@@ -37,7 +37,7 @@ namespace bot.Infrastructure.DataAccess
                     ToDoList list = await JsonSerializer.DeserializeAsync<ToDoList>(jsonFileStream, cancellationToken: ct);
                     index.Add(list.Id, list.User.UserId);
                 }
-                await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync(index, ct), ct);
+                await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync<Dictionary<Guid, Guid>>(index, ct), ct);
             }
         }
         private async Task<Dictionary<Guid, Guid>> ReadIndexAsync(CancellationToken ct)
@@ -51,12 +51,12 @@ namespace bot.Infrastructure.DataAccess
         }
         private async Task UpdateIndexAsync(Dictionary<Guid, Guid> index, CancellationToken ct)
         {
-            await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync(index, ct), ct);
+            await File.WriteAllTextAsync(_indexFilePath, await Utils.ObjestToJsonStringAsync<Dictionary<Guid, Guid>>(index, ct), ct);
         }
         async Task IToDoListRepository.AddAsync(ToDoList list, CancellationToken ct)
         {
             Directory.CreateDirectory(Path.Combine(_path, $"{list.User.UserId}"));
-            await File.WriteAllTextAsync(Path.Combine(_path, $"{list.User.UserId}", $"{list.Id}.json"), await Utils.ObjestToJsonStringAsync(list, ct), ct);
+            await File.WriteAllTextAsync(Path.Combine(_path, $"{list.User.UserId}", $"{list.Id}.json"), await Utils.ObjestToJsonStringAsync<ToDoList>(list, ct), ct);
             if (File.Exists(_indexFilePath))
             {
                 Dictionary<Guid, Guid> index = await ReadIndexAsync(ct);
