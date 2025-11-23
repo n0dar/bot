@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using bot.Core.Entities;
 using bot.Core.Exceptions;
+using bot.Core.Services.Classes;
 using bot.Core.Services.Interfaces;
 using bot.TelegramBot;
 using bot.TelegramBot.DTO;
@@ -14,7 +15,7 @@ using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
-using Telegram.Bot.Extensions;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace bot
 {
@@ -98,24 +99,22 @@ namespace bot
         {
             _botClient.SendMessage(update.Message.Chat.Id, "Версия — C.C.C, дата создания — DD.MM.YYYY", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: _ct);
         }
-
         async Task OnCallbackQuery(Update update, CancellationToken ct)
         {
-            //CallbackQuery callbackQuery = update.CallbackQuery;
-
             ToDoUser? toDoUser = await _userService.GetUserAsync(update.CallbackQuery.From.Id, ct);
             if (toDoUser != null)
             {
-                ToDoListCallbackDto toDoListCallbackDto = ToDoListCallbackDto.FromString(update.CallbackQuery.Data);
+                CallbackDto callbackDto = CallbackDto.FromString(update.CallbackQuery.Data);
                 ScenarioContext? scenarioContext = await ContextRepository.GetContext(update.CallbackQuery.From.Id, ct);
 
-                switch (toDoListCallbackDto.Action)
+                switch (callbackDto.Action)
                 {
                     case "show":
                         if (scenarioContext == null)
                         {
-                            await ProcessScenario(new ScenarioContext(ScenarioType.ProcessTask), update, ct); 
-                            await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"Активные задачи", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.ShowToDoItemsKeyboard(await _toDoService.GetByUserIdAndListAsync(toDoUser.UserId, toDoListCallbackDto.ToDoListId,ct)), cancellationToken: ct);
+                            IReadOnlyList<ToDoItem>? ToDoItems = await ((ToDoService)_toDoService).GetActiveByUserIdAndListAsync(toDoUser.UserId, callbackDto.Id, ct);
+                            if (ToDoItems.Any()) await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"Выберите задачу из активных задач списка '{(await _toDoListService.GetAsync((Guid)callbackDto.Id, ct)).Name}'", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.ShowToDoItemsKeyboard(ToDoItems), cancellationToken: ct);
+                            else await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"В списке нет активных задач", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
                         }                            
                         break;
                     case "addlist":
@@ -123,61 +122,82 @@ namespace bot
                         break;
                     case "deletelist":
                         if (scenarioContext == null)
-                        { 
+                        {
+                            //await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
                             scenarioContext = new ScenarioContext(ScenarioType.DeleteList);
                             await ProcessScenario(scenarioContext, update, ct);
                         }
                         break;
                     case "deletelistbyid":
                         if (scenarioContext?.CurrentScenario.ToString() == "DeleteList" && scenarioContext?.CurrentStep == "Approve")
-                        { 
-                            scenarioContext.Data["ToDoList"] = await _toDoListService.GetAsync((Guid)toDoListCallbackDto.ToDoListId, ct);
+                        {
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            scenarioContext.Data["ToDoList"] = await _toDoListService.GetAsync((Guid)callbackDto.Id, ct);
                             await ProcessScenario(scenarioContext, update, ct);
                         }
                         break;
-                    case "yes":
+                    case "deletelistbyidyes":
                         if (scenarioContext?.CurrentScenario.ToString() == "DeleteList" && scenarioContext?.CurrentStep == "Delete")
                         {
-                            scenarioContext.Data["Approve"] = toDoListCallbackDto.Action;
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            scenarioContext.Data["Approve"] = callbackDto.Action;
                             await ProcessScenario(scenarioContext, update, ct);
                         }
                         break;
-                    case "no":
+                    case "deletelistbyidno":
                         if (scenarioContext?.CurrentScenario.ToString() == "DeleteList" && scenarioContext?.CurrentStep == "Delete")
                         {
-                            scenarioContext.Data["Approve"] = toDoListCallbackDto.Action;
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            scenarioContext.Data["Approve"] = callbackDto.Action;
                             await ProcessScenario(scenarioContext, update, ct);
                         }
                         break;
                     case "addtask":
                         if (scenarioContext?.CurrentScenario.ToString() == "AddTask" && scenarioContext?.CurrentStep == "AddTask")
                         {
-                            scenarioContext.Data["ToDoList"] = await _toDoListService.GetAsync((Guid)toDoListCallbackDto.ToDoListId, ct);
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            scenarioContext.Data["ToDoList"] = await _toDoListService.GetAsync((Guid)callbackDto.Id, ct);
                             await ProcessScenario(scenarioContext, update, ct);
                         }
                         break;
                     case "showtask":
-                        if (scenarioContext?.CurrentScenario.ToString() == "ProcessTask")
+                        if (scenarioContext == null)
                         {
-                            ToDoItemCallbackDto toDoItemCallbackDto = ToDoItemCallbackDto.FromString(update.CallbackQuery.Data);
-                            ToDoItem? toDoItem = await _toDoService.GetAsync((Guid)toDoItemCallbackDto.ToDoItemId, ct);
-                            if (toDoItem != null)
-                            {
-                                scenarioContext.Data["messageId"] = (await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"{toDoItem.Name}:\n\nСрок выполнения: {toDoItem.Deadline}\nВремя создания: {toDoItem.CreatedAt}", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CompleteDeleteTaskKeyboard(toDoItem.Id), cancellationToken: ct)).Id;
-                            }
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            ToDoItem? toDoItem = await _toDoService.GetAsync((Guid)callbackDto.Id, ct);
+                            if (toDoItem != null)  await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"Задача '{toDoItem.Name}'\n\nСрок выполнения: {toDoItem.Deadline}\nВремя создания: {toDoItem.CreatedAt}", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CompleteDeleteTaskKeyboard(toDoItem.Id), cancellationToken: ct);
                         }
                         break;
                     case "completetask":
-                        if (scenarioContext?.CurrentScenario.ToString() == "ProcessTask")
+                        if (scenarioContext == null)
                         {
-                            ToDoItemCallbackDto toDoItemCallbackDto = ToDoItemCallbackDto.FromString(update.CallbackQuery.Data);
-                            await _toDoService.MarkCompletedAsync((Guid)toDoItemCallbackDto.ToDoItemId, ct);
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            await _toDoService.MarkCompletedAsync((Guid)callbackDto.Id, ct);
                             await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, "Задача завершена", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
-                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: (int)scenarioContext.Data["messageId"], replyMarkup: null);
-                            //scenarioContext?.CurrentScenario. . ScenarioResult.Completed
                         }
                         break;
                     case "deletetask":
+                        if (scenarioContext == null)
+                        {
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            ToDoItem? toDoItem = await _toDoService.GetAsync((Guid)callbackDto.Id, ct);
+                            if (toDoItem != null) await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"Подтверждаете удаление задачи {toDoItem.Name}?", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.YesNoKeyboard("deletetask", toDoItem.Id), cancellationToken: ct);
+                        }
+                        break;
+                    case "deletetaskyes":
+                        if (scenarioContext == null)
+                        {
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            await _toDoService.DeleteAsync((Guid)callbackDto.Id, ct);
+                            await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"Задача удалена", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
+                        }
+                        break;
+                    case "deletetaskno":
+                        if (scenarioContext == null)
+                        {
+                            await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
+                            await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, "Удаление отменено", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
+                        }
                         break;
                 }
             }
@@ -207,29 +227,14 @@ namespace bot
                         await Start(update);
                         break;
                     case "/addtask" when toDoUser != null:
-                        await ProcessScenario(new ScenarioContext(ScenarioType.AddTask), update, cancellationToken);
+                        ScenarioContext addTaskScenarioContext = new(ScenarioType.AddTask);
+                        await ProcessScenario(addTaskScenarioContext, update, cancellationToken);
                         break;
                     case "/show" when toDoUser != null:
                         await _botClient.SendMessage(update.Message.Chat.Id, "Выберите список", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.ShowToDoListKeyboard(await _toDoListService.GetUserListsAsync(toDoUser.UserId, cancellationToken)), cancellationToken: cancellationToken);
                         break;
                     case "/find" when toDoUser != null && commandParam != null:
                         await _botClient.SendMessage(update.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.FindAsync(toDoUser, commandParam, cancellationToken), "/show"), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
-                        break;
-                    case "/removetask" when toDoUser != null && commandParam != null:
-                        if (Guid.TryParse(commandParam, out taskId))
-                        {
-                            await _toDoService.DeleteAsync(taskId, _ct);
-                            await _botClient.SendMessage(update.Message.Chat.Id, "Задача удалена", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
-                        }
-                        else await _botClient.SendMessage(update.Message.Chat.Id, "Некорректный идентификатор задачи", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
-                        break;
-                    case "/completetask" when toDoUser != null && commandParam != null:
-                        if (Guid.TryParse(commandParam, out taskId))
-                        {
-                            await _toDoService.MarkCompletedAsync(taskId, cancellationToken);
-                            await _botClient.SendMessage(update.Message.Chat.Id, "Задача завершена", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
-                        }
-                        else await _botClient.SendMessage(update.Message.Chat.Id, "Некорректный идентификатор задачи", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
                         break;
                     case "/report" when toDoUser != null:
                         await Report(update);

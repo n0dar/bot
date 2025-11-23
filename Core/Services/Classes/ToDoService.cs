@@ -34,7 +34,7 @@ namespace bot.Core.Services.Classes
         {
             return await toDoRepository.FindAsync(user.UserId, x => x.Name.StartsWith(namePrefix), ct);
         }
-        public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
+        public async Task<IReadOnlyList<ToDoItem>?> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
         {
             return await toDoRepository.GetActiveByUserIdAsync(userId, ct);
         }
@@ -56,9 +56,12 @@ namespace bot.Core.Services.Classes
         public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct)
         {
             IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
-            if (listId == null) toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List == null)];
-            else toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List?.Id == listId)];
-            return toDoItems;
+            return [.. toDoItems.Where(toDoItem => toDoItem.List?.Id == listId)];
+        }
+        public async Task<IReadOnlyList<ToDoItem>?> GetActiveByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct)
+        {
+            IReadOnlyList<ToDoItem> toDoItems = await GetByUserIdAndListAsync(userId, listId, ct);
+            return [.. toDoItems.Where(toDoItem => toDoItem.List?.Id == listId && toDoItem.State == ToDoItemState.Active)]; ;
         }
         public async Task<int> DeleteByUserIdAndListAsync(Guid userId, Guid listId, CancellationToken ct)
         {

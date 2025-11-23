@@ -18,22 +18,19 @@ namespace bot.TelegramBot.Scenarios
         async Task<ScenarioResult> IScenario.HandleMessageAsync(ITelegramBotClient bot, ScenarioContext context, Update update, CancellationToken ct)
         {
             context.Data["ToDoUser"] = await _userService.GetUserAsync(update.CallbackQuery.From.Id, ct);
-            return ScenarioResult.Transition;
 
-            //switch (context.CurrentStep)
-            //{
-            //    case null:
-            //        context.Data["ToDoUser"] = await _userService.GetUserAsync(update.CallbackQuery.From.Id, ct);
-            //        //await bot.SendMessage(update.CallbackQuery.Message.Chat.Id, "Введите название списка:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
-            //        //context.CurrentStep = "Name";
-            //        return ScenarioResult.Transition;
-            //    default:
-            //        ////context.Data["ToDoListName"] = update.Message.Text;
-            //        //await _toDoListService.AddAsync((ToDoUser)context.Data["ToDoUser"], update.Message.Text, ct);
-            //        //await bot.SendMessage(update.Message.Chat.Id, "Название списка добавлено", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.DefaultKeyboard, cancellationToken: ct);
-            //        return ScenarioResult.Completed;
-
-            //}
+            switch (context.CurrentStep)
+            {
+                case null:
+                    //await bot.SendMessage(update.CallbackQuery.Message.Chat.Id, "Введите название списка:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
+                    context.CurrentStep = "completetask";
+                    return ScenarioResult.Transition;
+                default:
+                    ////context.Data["ToDoListName"] = update.Message.Text;
+                    //await _toDoListService.AddAsync((ToDoUser)context.Data["ToDoUser"], update.Message.Text, ct);
+                    //await bot.SendMessage(update.Message.Chat.Id, "Название списка добавлено", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.DefaultKeyboard, cancellationToken: ct);
+                    return ScenarioResult.Completed;
+            }
         }
     }
 }
