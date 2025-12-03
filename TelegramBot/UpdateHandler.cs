@@ -16,6 +16,7 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
+using static bot.Core.Entities.ToDoItem;
 
 namespace bot
 {
@@ -113,12 +114,20 @@ namespace bot
                         if (scenarioContext == null)
                         {
                             PagedListCallbackDto pagedListCallbackDto = PagedListCallbackDto.FromString(update.CallbackQuery.Data);
-                            IReadOnlyList<ToDoItem>? toDoItems = await ((ToDoService)_toDoService).GetActiveByUserIdAndListAsync(toDoUser.UserId, pagedListCallbackDto.ToDoListId, ct);
-                            if (toDoItems.Any())
-                                await _botClient.EditMessageText(update.CallbackQuery.Message.Chat.Id, update.CallbackQuery.Message.Id, $"Выберите задачу из активных задач списка '{(await _toDoListService.GetAsync((Guid)pagedListCallbackDto.ToDoListId, ct)).Name}'", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.PagedButtonsKeyboard(toDoItems, pagedListCallbackDto), cancellationToken: ct);
-                            else 
-                                await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"В списке нет активных задач", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
+                            IReadOnlyList<ToDoItem>? toDoItems = await ((ToDoService)_toDoService).GetByUserIdAndListAsync(toDoUser.UserId, pagedListCallbackDto.ToDoListId, ToDoItemState.Active, ct);
+                            await _botClient.EditMessageText(update.CallbackQuery.Message.Chat.Id, update.CallbackQuery.Message.Id, $"Активные задачи списка '{(await _toDoListService.GetAsync((Guid)pagedListCallbackDto.ToDoListId, ct)).Name}'", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.PagedButtonsKeyboard(toDoItems, pagedListCallbackDto), cancellationToken: ct);
                         }                            
+                        break;
+                    case "show_completed":
+                        if (scenarioContext == null)
+                        {
+                            PagedListCallbackDto pagedListCallbackDto = PagedListCallbackDto.FromString(update.CallbackQuery.Data);
+                            IReadOnlyList<ToDoItem>? toDoItems = await ((ToDoService)_toDoService).GetByUserIdAndListAsync(toDoUser.UserId, pagedListCallbackDto.ToDoListId, ToDoItemState.Completed, ct);
+                            if (toDoItems.Any())
+                                await _botClient.EditMessageText(update.CallbackQuery.Message.Chat.Id, update.CallbackQuery.Message.Id, $"Выполненные задачи списка '{(await _toDoListService.GetAsync((Guid)pagedListCallbackDto.ToDoListId, ct)).Name}'", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.PagedButtonsKeyboard(toDoItems, pagedListCallbackDto), cancellationToken: ct);
+                            else
+                                await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"В списке нет выполненных задач", Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: ct);
+                        }
                         break;
                     case "addlist":
                         if (scenarioContext == null) await ProcessScenario(new ScenarioContext(ScenarioType.AddList), update, ct);
@@ -171,7 +180,7 @@ namespace bot
                             ToDoItemCallbackDto toDoItemCallbackDto = ToDoItemCallbackDto.FromString(update.CallbackQuery.Data);
                             await _botClient.EditMessageReplyMarkup(chatId: update.CallbackQuery.Message.Chat.Id, messageId: update.CallbackQuery.Message.MessageId);
                             ToDoItem? toDoItem = await _toDoService.GetAsync((Guid)toDoItemCallbackDto.ToDoItemId, ct);
-                            if (toDoItem != null)  await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"Задача '{toDoItem.Name}'\n\nСрок выполнения: {toDoItem.Deadline}\nВремя создания: {toDoItem.CreatedAt}", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CompleteDeleteTaskKeyboard(toDoItem.Id), cancellationToken: ct);
+                            if (toDoItem != null)  await _botClient.SendMessage(update.CallbackQuery.Message.Chat.Id, $"Задача '{toDoItem.Name}'\n\nСрок выполнения: {toDoItem.Deadline}\nВремя создания: {toDoItem.CreatedAt}" +  (toDoItem.StateChangedAt == null ? "" : "\nВремя выполнения: " + toDoItem.StateChangedAt?.ToString()), Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CompleteDeleteTaskKeyboard(toDoItem), cancellationToken: ct);
                         }
                         break;
                     case "completetask":

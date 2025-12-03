@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Telegram.Bot.Types.ReplyMarkups;
+using static bot.Core.Entities.ToDoItem;
 
 namespace bot.TelegramBot
 {
@@ -77,14 +78,25 @@ namespace bot.TelegramBot
             }
             return showToDoItemsKeyboard;
         }
-        public static InlineKeyboardMarkup CompleteDeleteTaskKeyboard(Guid id)
+        public static InlineKeyboardMarkup CompleteDeleteTaskKeyboard(ToDoItem toDoItem)
         {
             InlineKeyboardMarkup showKeyboard = new();
-            showKeyboard.AddNewRow
-            ([
-                InlineKeyboardButton.WithCallbackData("✅Выполнить", (new ToDoItemCallbackDto() { Action = "completetask",ToDoItemId = id }).ToString()),
-                InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoItemCallbackDto() { Action = "deletetask", ToDoItemId = id }).ToString()),
-            ]);
+
+            if (toDoItem.State == ToDoItemState.Active)
+            {
+                showKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData("✅Выполнить", (new ToDoItemCallbackDto() { Action = "completetask",ToDoItemId = toDoItem.Id }).ToString()),
+                    InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoItemCallbackDto() { Action = "deletetask", ToDoItemId = toDoItem.Id }).ToString()),
+                ]);
+            }
+            else
+            { 
+                showKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoItemCallbackDto() { Action = "deletetask", ToDoItemId = toDoItem.Id }).ToString()),
+                ]);
+            }
             return showKeyboard;
         }
         public static InlineKeyboardMarkup PagedButtonsKeyboard(IReadOnlyList<ToDoItem> toDoItems, PagedListCallbackDto listDto)
@@ -117,6 +129,12 @@ namespace bot.TelegramBot
             }
 
             if (navigationKeybordButtons.Count > 0) pagedButtonsKeyboard.AddNewRow(navigationKeybordButtons.ToArray());
+
+
+            pagedButtonsKeyboard.AddNewRow
+            ([
+                InlineKeyboardButton.WithCallbackData("☑️Посмотреть выполненные", new PagedListCallbackDto { Action = "show_completed", ToDoListId = listDto.ToDoListId, Page = 0 }.ToString())
+            ]);
 
             return pagedButtonsKeyboard;
         }
