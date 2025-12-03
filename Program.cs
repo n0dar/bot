@@ -25,10 +25,6 @@ namespace bot
                     new() { Command = "start", Description = "Старт" },
                     new() { Command = "cancel", Description = "Отменить команду" },
                     new() { Command = "addtask", Description = "Добавить задачу" },
-                    new() { Command = "show", Description = "Показать списки" },
-                    new() { Command = "find", Description = "Активные задачи по префиксу (укажите через пробел)" },
-                    //new() { Command = "removetask", Description = "Удалить по GUID (укажите через пробел)" },
-                    //new() { Command = "completetask", Description = "Завершить по GUID (укажите через пробел)" },
                     new() { Command = "report", Description = "Статистика" },
                     new() { Command = "info", Description = "Версия и дата создания" }
                 ];
