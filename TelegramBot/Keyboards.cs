@@ -1,4 +1,5 @@
 ﻿using bot.Core.Entities;
+using bot.Helpers;
 using bot.TelegramBot.DTO;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ namespace bot.TelegramBot
             {
                 inlineKeyboardMarkup.AddNewRow
                 ([
-                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new CallbackDto() { Action = action, Id=item.Id}).ToString())
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoItemCallbackDto() { Action = action, ToDoItemId = item.Id}).ToString())
                 ]);
             }
             return inlineKeyboardMarkup;
@@ -58,8 +59,8 @@ namespace bot.TelegramBot
             InlineKeyboardMarkup showKeyboard = new();
             showKeyboard.AddNewRow
             ([
-                InlineKeyboardButton.WithCallbackData("✅Да", (new CallbackDto() {Action = String.Concat(action,"yes"), Id = Id}).ToString()),
-                InlineKeyboardButton.WithCallbackData("❌Нет", (new CallbackDto() {Action = String.Concat(action,"no"), Id = Id}).ToString())
+                InlineKeyboardButton.WithCallbackData("✅Да", (new ToDoItemCallbackDto() {Action = String.Concat(action,"yes"), ToDoItemId = Id}).ToString()),
+                InlineKeyboardButton.WithCallbackData("❌Нет", (new ToDoItemCallbackDto() {Action = String.Concat(action,"no"), ToDoItemId = Id}).ToString())
             ]);
             return showKeyboard;
         }
@@ -71,7 +72,7 @@ namespace bot.TelegramBot
             {
                 showToDoItemsKeyboard.AddNewRow
                 ([
-                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new CallbackDto() { Action = "showtask", Id=item.Id}).ToString())
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoItemCallbackDto() { Action = "showtask", ToDoItemId = item.Id}).ToString())
                 ]);
             }
             return showToDoItemsKeyboard;
@@ -81,10 +82,45 @@ namespace bot.TelegramBot
             InlineKeyboardMarkup showKeyboard = new();
             showKeyboard.AddNewRow
             ([
-                InlineKeyboardButton.WithCallbackData("✅Выполнить", (new CallbackDto() { Action = "completetask", Id = id }).ToString()),
-                InlineKeyboardButton.WithCallbackData("❌Удалить", (new CallbackDto() { Action = "deletetask", Id = id }).ToString()),
+                InlineKeyboardButton.WithCallbackData("✅Выполнить", (new ToDoItemCallbackDto() { Action = "completetask",ToDoItemId = id }).ToString()),
+                InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoItemCallbackDto() { Action = "deletetask", ToDoItemId = id }).ToString()),
             ]);
             return showKeyboard;
         }
+        public static InlineKeyboardMarkup PagedButtonsKeyboard(IReadOnlyList<ToDoItem> toDoItems, PagedListCallbackDto listDto)
+        {
+
+            int _pageSize = 5;
+            InlineKeyboardMarkup pagedButtonsKeyboard = new();
+
+            IEnumerable<int> batch = EnumerableExtension.GetBatchByNumber(_pageSize, listDto.Page);
+
+            foreach (var index in batch.Where(i => i < toDoItems.Count))
+            {
+                pagedButtonsKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData(toDoItems[index].Name,   $"showtask|{toDoItems[index].Id}")
+                ]);
+            }
+
+            List<InlineKeyboardButton> navigationKeybordButtons = new();
+
+            if (listDto.Page > 0)
+            {
+                navigationKeybordButtons.Add(InlineKeyboardButton.WithCallbackData("⬅️", (new PagedListCallbackDto { Action = listDto.Action, ToDoListId = listDto.ToDoListId, Page = listDto.Page - 1 }).ToString()));
+            }
+
+            int totalPages = (int)Math.Ceiling((double)toDoItems.Count / _pageSize);
+            if (listDto.Page < totalPages - 1)
+            {
+                navigationKeybordButtons.Add(InlineKeyboardButton.WithCallbackData("➡️", (new PagedListCallbackDto { Action = listDto.Action, ToDoListId = listDto.ToDoListId, Page = listDto.Page + 1 }).ToString()));
+            }
+
+            if (navigationKeybordButtons.Count > 0) pagedButtonsKeyboard.AddNewRow(navigationKeybordButtons.ToArray());
+
+            return pagedButtonsKeyboard;
+        }
     }
 }
+
+
