@@ -8,7 +8,8 @@ namespace bot.TelegramBot.Scenarios
         None,
         AddTask,
         AddList,
-        DeleteList
+        DeleteList,
+        ProcessTask
     }
     public class ScenarioContext(ScenarioType scenario)
     {

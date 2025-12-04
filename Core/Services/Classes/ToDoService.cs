@@ -34,7 +34,7 @@ namespace bot.Core.Services.Classes
         {
             return await toDoRepository.FindAsync(user.UserId, x => x.Name.StartsWith(namePrefix), ct);
         }
-        public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
+        public async Task<IReadOnlyList<ToDoItem>?> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
         {
             return await toDoRepository.GetActiveByUserIdAsync(userId, ct);
         }
@@ -53,12 +53,15 @@ namespace bot.Core.Services.Classes
             }
             else throw new TaskDoesNotExistException("Активная задача с таким GUID не существует");
         }
-        public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct)
+        //public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct)
+        //{
+        //    IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
+        //    return [.. toDoItems.Where(toDoItem => toDoItem.List?.Id == listId)];
+        //}
+        public async Task<IReadOnlyList<ToDoItem>?> GetByUserIdAndListAsync(Guid userId, Guid? listId, ToDoItemState? toDoItemState, CancellationToken ct)
         {
             IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
-            if (listId == null) toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List == null)];
-            else toDoItems = [.. toDoItems.Where(toDoItems => toDoItems.List?.Id == listId)];
-            return toDoItems;
+            return [.. toDoItems.Where(toDoItem => toDoItem.List?.Id == listId && toDoItem.State == (toDoItemState ?? toDoItem.State))]; ;
         }
         public async Task<int> DeleteByUserIdAndListAsync(Guid userId, Guid listId, CancellationToken ct)
         {
@@ -70,5 +73,11 @@ namespace bot.Core.Services.Classes
             }
             return toDoItems.Count;
         }
+
+        public async Task<ToDoItem?> GetAsync(Guid toDoItemId, CancellationToken ct)
+        {
+            return await toDoRepository.GetAsync(toDoItemId, ct);
+        }
+
     }
 }

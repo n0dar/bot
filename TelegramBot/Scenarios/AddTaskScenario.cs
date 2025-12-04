@@ -24,26 +24,19 @@ namespace bot.TelegramBot.Scenarios
                 case null:
                     context.Data["ToDoUser"] = await UserService.GetUserAsync(update.Message.From.Id, ct);
                     toDoLists = await ToDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
-                    if (toDoLists.Any())
-                    {
-                        await bot.SendMessage(update.Message.Chat.Id, "Выберете список:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.AddTaskToDoListKeyboard(toDoLists), cancellationToken: ct);
-                    }
-                    else
-                    {
-                        await bot.SendMessage(update.Message.Chat.Id, "У вас нет ни одного списка задач. Введите название нового списка:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
-                    }
+                    if (toDoLists.Any()) await bot.SendMessage(update.Message.Chat.Id, "Выберете список:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.ToDoListKeyboard(toDoLists, "addtask"), cancellationToken: ct);
+                    else {await bot.SendMessage(update.Message.Chat.Id, "У вас нет ни одного списка задач. Введите название нового списка:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);}
                     context.CurrentStep = "AddTask";
                     return ScenarioResult.Transition;
                 case "AddTask":
                     toDoLists = await ToDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
-                    if (toDoLists.Any()) { }
-                    else
+                    if (!toDoLists.Any())
                     {
                         await ToDoListService.AddAsync((ToDoUser)context.Data["ToDoUser"], update.Message.Text, ct);
                         toDoLists = await ToDoListService.GetUserListsAsync(((ToDoUser)context.Data["ToDoUser"]).UserId, ct);
                         context.Data["ToDoList"] = toDoLists[0];
                     }
-                    await bot.SendMessage((update.Message ?? update.CallbackQuery.Message).Chat.Id, "Введите название задачи:", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
+                    await bot.SendMessage((update.Message ?? update.CallbackQuery.Message).Chat.Id, $"Введите название задачи списка '{((ToDoList)(context.Data["ToDoList"])).Name}':", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.CancelKeyboard, cancellationToken: ct);
                     context.CurrentStep = "TaskName";
                     return ScenarioResult.Transition;
                 case "TaskName":

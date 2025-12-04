@@ -16,7 +16,7 @@ namespace bot.Core.Entities
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ToDoItemState State { get; set; } = ToDoItemState.Active;
         public DateTime? StateChangedAt { get; set; }
-        public DateOnly Deadline { get; set; }
+        public DateOnly Deadline { get; set; } = deadline;
         public ToDoList? List { get; set; } = list;
         public override string ToString()
         {

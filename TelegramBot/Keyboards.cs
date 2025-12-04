@@ -1,7 +1,11 @@
 ﻿using bot.Core.Entities;
+using bot.Helpers;
 using bot.TelegramBot.DTO;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using Telegram.Bot.Types.ReplyMarkups;
+using static bot.Core.Entities.ToDoItem;
 
 namespace bot.TelegramBot
 {
@@ -19,62 +23,122 @@ namespace bot.TelegramBot
         {
             ResizeKeyboard = true
         };
+        public static InlineKeyboardMarkup ToDoListKeyboard(IReadOnlyList<ToDoList> toDoList, string action)
+        {
+            InlineKeyboardMarkup inlineKeyboardMarkup = new();
+
+            foreach (ToDoList item in toDoList)
+            {
+                inlineKeyboardMarkup.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoItemCallbackDto() { Action = action, ToDoItemId = item.Id}).ToString())
+                ]);
+            }
+            return inlineKeyboardMarkup;
+        }
         public static InlineKeyboardMarkup ShowToDoListKeyboard(IReadOnlyList<ToDoList> toDoList)
+        {
+            InlineKeyboardMarkup showToDoListKeyboard = new();
+
+            showToDoListKeyboard.AddButton(InlineKeyboardButton.WithCallbackData("📌Без списка", (new CallbackDto() { Action = "show"}).ToString()));
+
+            InlineKeyboardMarkup toDoListKeyboard = ToDoListKeyboard(toDoList, "show");
+            foreach (var buttonRow in toDoListKeyboard.InlineKeyboard)
+            {
+                showToDoListKeyboard.AddNewRow([.. buttonRow]);
+            }
+
+            showToDoListKeyboard.AddNewRow
+            ([
+                InlineKeyboardButton.WithCallbackData("🆕Добавить", (new CallbackDto() { Action = "addlist" }).ToString()),
+                InlineKeyboardButton.WithCallbackData("❌Удалить", (new CallbackDto() { Action = "deletelist" }).ToString())
+            ]);
+            return showToDoListKeyboard;
+        }
+        public static InlineKeyboardMarkup YesNoKeyboard(string action, Guid? Id)
+        {
+            InlineKeyboardMarkup showKeyboard = new();
+            showKeyboard.AddNewRow
+            ([
+                InlineKeyboardButton.WithCallbackData("✅Да", (new ToDoItemCallbackDto() {Action = String.Concat(action,"yes"), ToDoItemId = Id}).ToString()),
+                InlineKeyboardButton.WithCallbackData("❌Нет", (new ToDoItemCallbackDto() {Action = String.Concat(action,"no"), ToDoItemId = Id}).ToString())
+            ]);
+            return showKeyboard;
+        }
+        public static InlineKeyboardMarkup ShowToDoItemsKeyboard(IReadOnlyList<ToDoItem> toDoItems)
+        {
+            InlineKeyboardMarkup showToDoItemsKeyboard = new();
+
+            foreach (ToDoItem item in toDoItems)
+            {
+                showToDoItemsKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoItemCallbackDto() { Action = "showtask", ToDoItemId = item.Id}).ToString())
+                ]);
+            }
+            return showToDoItemsKeyboard;
+        }
+        public static InlineKeyboardMarkup CompleteDeleteTaskKeyboard(ToDoItem toDoItem)
         {
             InlineKeyboardMarkup showKeyboard = new();
 
-            showKeyboard.AddButton(InlineKeyboardButton.WithCallbackData("📌Без списка", (new ToDoListCallbackDto() { Action = "show"}).ToString()));
-            foreach (ToDoList item in toDoList)
+            if (toDoItem.State == ToDoItemState.Active)
             {
                 showKeyboard.AddNewRow
                 ([
-                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "show", ToDoListId=item.Id}).ToString())
+                    InlineKeyboardButton.WithCallbackData("✅Выполнить", (new ToDoItemCallbackDto() { Action = "completetask",ToDoItemId = toDoItem.Id }).ToString()),
+                    InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoItemCallbackDto() { Action = "deletetask", ToDoItemId = toDoItem.Id }).ToString()),
                 ]);
             }
-
-            showKeyboard.AddNewRow
-            ([
-                InlineKeyboardButton.WithCallbackData("🆕Добавить", (new ToDoListCallbackDto() { Action = "addlist" }).ToString()),
-                InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoListCallbackDto() { Action = "deletelist" }).ToString())
-            ]);
+            else
+            { 
+                showKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData("❌Удалить", (new ToDoItemCallbackDto() { Action = "deletetask", ToDoItemId = toDoItem.Id }).ToString()),
+                ]);
+            }
             return showKeyboard;
         }
-        public static InlineKeyboardMarkup DeleteToDoListKeyboard(IReadOnlyList<ToDoList> toDoList)
+        public static InlineKeyboardMarkup PagedButtonsKeyboard(IReadOnlyList<ToDoItem> toDoItems, PagedListCallbackDto listDto)
         {
-            InlineKeyboardMarkup deleteKeyboard = new();
 
-            foreach (ToDoList item in toDoList)
+            int _pageSize = 5;
+            InlineKeyboardMarkup pagedButtonsKeyboard = new();
+
+            IEnumerable<int> batch = EnumerableExtension.GetBatchByNumber(_pageSize, listDto.Page);
+
+            foreach (var index in batch.Where(i => i < toDoItems.Count))
             {
-                deleteKeyboard.AddNewRow
+                pagedButtonsKeyboard.AddNewRow
                 ([
-                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "deletelistbyid", ToDoListId=item.Id}).ToString())
+                    InlineKeyboardButton.WithCallbackData(toDoItems[index].Name,   $"showtask|{toDoItems[index].Id}")
                 ]);
             }
-            return deleteKeyboard;
-        }
-        public static InlineKeyboardMarkup AddTaskToDoListKeyboard(IReadOnlyList<ToDoList> toDoList)
-        {
-            InlineKeyboardMarkup addTaskKeyboard = new();
 
-            foreach (ToDoList item in toDoList)
+            List<InlineKeyboardButton> navigationKeybordButtons = new();
+
+            if (listDto.Page > 0)
             {
-                addTaskKeyboard.AddNewRow
-                ([
-                    InlineKeyboardButton.WithCallbackData($"{item.Name}", (new ToDoListCallbackDto() { Action = "addtask", ToDoListId=item.Id}).ToString())
-                ]);
+                navigationKeybordButtons.Add(InlineKeyboardButton.WithCallbackData("⬅️", (new PagedListCallbackDto { Action = listDto.Action, ToDoListId = listDto.ToDoListId, Page = listDto.Page - 1 }).ToString()));
             }
-            return addTaskKeyboard;
-        }
 
-        public static InlineKeyboardMarkup YesNoKeyboard()
-        {
-            InlineKeyboardMarkup showKeyboard = new();
-            showKeyboard.AddNewRow
+            int totalPages = (int)Math.Ceiling((double)toDoItems.Count / _pageSize);
+            if (listDto.Page < totalPages - 1)
+            {
+                navigationKeybordButtons.Add(InlineKeyboardButton.WithCallbackData("➡️", (new PagedListCallbackDto { Action = listDto.Action, ToDoListId = listDto.ToDoListId, Page = listDto.Page + 1 }).ToString()));
+            }
+
+            if (navigationKeybordButtons.Count > 0) pagedButtonsKeyboard.AddNewRow(navigationKeybordButtons.ToArray());
+
+
+            pagedButtonsKeyboard.AddNewRow
             ([
-                InlineKeyboardButton.WithCallbackData("✅Да", (new ToDoListCallbackDto() { Action = "yes"}).ToString()),
-                InlineKeyboardButton.WithCallbackData("❌Нет", (new ToDoListCallbackDto() { Action = "no"}).ToString())
+                InlineKeyboardButton.WithCallbackData("☑️Посмотреть выполненные", new PagedListCallbackDto { Action = "show_completed", ToDoListId = listDto.ToDoListId, Page = 0 }.ToString())
             ]);
-            return showKeyboard;
+
+            return pagedButtonsKeyboard;
         }
     }
 }
+
+
