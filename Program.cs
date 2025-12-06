@@ -34,9 +34,11 @@ namespace bot
                 FileUserRepository fileUserRepository = new("UserRepository");
                 UserService userService = new(fileUserRepository);
 
-                FileToDoRepository fileToDoRepository = new("ToDoRepository");
-                ToDoService toDoService = new(fileToDoRepository);
-                ToDoReportService toDoReportService = new(fileToDoRepository);
+                //DataContextFactory dataContextFactory = new("Host=localhost;Port=5432;Database=ToDoList;Username=postgres;Password=81828516;Pooling=true");
+                DataContextFactory dataContextFactory = new("");
+                SqlToDoRepository sqlToDoRepository = new(dataContextFactory);
+                ToDoService toDoService = new(sqlToDoRepository);
+                ToDoReportService toDoReportService = new(sqlToDoRepository);
 
                 FileToDoListRepository fileToListDoRepository = new("ToDoListRepository");
                 ToDoListService toDoListService = new(fileToListDoRepository);

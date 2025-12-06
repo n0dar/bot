@@ -55,7 +55,7 @@ namespace bot.Infrastructure.DataAccess
                 User = MapFromModel(model.ToDoUser),
                 Name = model.Name,
                 CreatedAt = model.CreatedAt,
-                State = model.State ? ToDoItemState.Active : ToDoItemState.Completed,
+                State = model.State,
                 StateChangedAt = model.StateChangedAt,
                 Deadline = model.Deadline,
                 List = MapFromModel(model.ToDoList)
@@ -69,7 +69,7 @@ namespace bot.Infrastructure.DataAccess
                 IdToDoUser = entity.User.UserId,
                 Name = entity.Name,
                 CreatedAt = entity.CreatedAt,
-                State = entity.State == ToDoItemState.Active,
+                State = entity.State,
                 StateChangedAt = entity.StateChangedAt,
                 Deadline = entity.Deadline,
                 IdToDoList = entity.List.Id,

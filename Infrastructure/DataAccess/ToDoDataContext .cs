@@ -8,7 +8,7 @@ namespace bot.Infrastructure.DataAccess
     {
         public ToDoDataContext(string connectionString) : base(ProviderName.PostgreSQL, connectionString){}
         public ITable<ToDoUserModel> ToDoUser => this.GetTable<ToDoUserModel>();
-        public ITable<ToDoListModel> ToToDoList => this.GetTable<ToDoListModel>();
+        public ITable<ToDoListModel> ToDoList => this.GetTable<ToDoListModel>();
         public ITable<ToDoItemModel> ToDoItem => this.GetTable<ToDoItemModel>();
 
     }

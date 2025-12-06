@@ -14,7 +14,7 @@ namespace bot.Core.Services.Classes
         }
         public async Task<ToDoUser> RegisterUserAsync(long telegramUserId, string telegramUserName, CancellationToken ct)
         {
-            ToDoUser toDoUser = new(telegramUserId, telegramUserName);
+            ToDoUser toDoUser = new (telegramUserId, telegramUserName);
             await Task.Run(() => userRepository.AddAsync(toDoUser, ct),ct);
             return toDoUser;
         }

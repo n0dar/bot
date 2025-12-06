@@ -3,21 +3,21 @@ using System;
 
 namespace bot.Core.Entities
 {
-    internal class ToDoItem()//(ToDoUser user, string name, DateOnly deadline, ToDoList? list)
+    public class ToDoItem()
     {
         public enum ToDoItemState
         {
-            Active,
-            Completed
+            Active = 1,
+            Completed = 0
         }
-        public Guid Id { get; set; }// = Guid.NewGuid();
-        public ToDoUser User { get; set; }// = user;
-        public string Name { get; set; }// = name;
-        public DateTime CreatedAt { get; set; }// = DateTime.UtcNow;
-        public ToDoItemState State { get; set; }// = ToDoItemState.Active;
+        public Guid Id { get; set; }
+        public ToDoUser User { get; set; }
+        public string Name { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public ToDoItemState State { get; set; }
         public DateTime? StateChangedAt { get; set; }
-        public DateOnly Deadline { get; set; }// = deadline;
-        public ToDoList? List { get; set; }// = list;
+        public DateOnly Deadline { get; set; }
+        public ToDoList? List { get; set; }
         public override string ToString()
         {
             return $"({State}) {Name} - {CreatedAt} - '{Id}'";
