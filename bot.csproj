@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Infrastructure\DataAccess\FileToDoListRepository.cs" />
     <Compile Remove="Infrastructure\DataAccess\FileToDoRepository.cs" />
     <Compile Remove="Infrastructure\DataAccess\InMemoryToDoRepository.cs" />
     <Compile Remove="Infrastructure\DataAccess\InMemoryUserRepository.cs" />

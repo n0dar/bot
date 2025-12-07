@@ -31,17 +31,18 @@ namespace bot
 
                 await botClient.SetMyCommands(commands);
 
+                //DataContextFactory dataContextFactory = new("Host=localhost;Port=5432;Database=ToDoList;Username=postgres;Password=81828516;Pooling=true");
+                DataContextFactory dataContextFactory = new("");
+
                 FileUserRepository fileUserRepository = new("UserRepository");
                 UserService userService = new(fileUserRepository);
 
-                //DataContextFactory dataContextFactory = new("Host=localhost;Port=5432;Database=ToDoList;Username=postgres;Password=81828516;Pooling=true");
-                DataContextFactory dataContextFactory = new("");
                 SqlToDoRepository sqlToDoRepository = new(dataContextFactory);
                 ToDoService toDoService = new(sqlToDoRepository);
                 ToDoReportService toDoReportService = new(sqlToDoRepository);
 
-                FileToDoListRepository fileToListDoRepository = new("ToDoListRepository");
-                ToDoListService toDoListService = new(fileToListDoRepository);
+                SqlToDoListRepository sqlToListDoRepository = new(dataContextFactory);
+                ToDoListService toDoListService = new(sqlToListDoRepository);
 
                 IEnumerable<IScenario> scenerios =
                 [
