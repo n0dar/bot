@@ -9,11 +9,9 @@ namespace bot.Infrastructure.DataAccess
         {
             _connectionString = connectionString;
         }
-
         public ToDoDataContext CreateDataContext()
         {
             return new ToDoDataContext(_connectionString);
         }
-        //Host=localhost;Port=5432;Database=tododb;Username=user;Password=pass;Pooling=true
     }
 }

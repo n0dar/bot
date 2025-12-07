@@ -21,6 +21,6 @@ namespace bot.Core.DataAccess
         //Возвращает количество активных задач у пользователя
         Task<int> CountActiveAsync(Guid userId, CancellationToken ct);
         //Возвращает все задачи пользователя, которые удовлетворяют предикату
-        Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct);
+        //Task<IReadOnlyList<ToDoItem>> FindAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct);
     }
 }

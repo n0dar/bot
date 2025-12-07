@@ -9,7 +9,7 @@ namespace bot.Core.DataAccess.Models
     {
         [PrimaryKey, Column("id")]                              public Guid Id { get; set; }
         [Column("telegramUserId"), NotNull]                     public long TelegramUserId { get; set; }
-        [Column("telegramUserName"), NotNull, MaxLength(32)]    public string TelegramUserName { get; set; } = string.Empty;
+        [Column("telegramUserName"), NotNull, MaxLength(32)]    public string TelegramUserName { get; set; }
         [Column("registeredAt")]                                public DateTime RegisteredAt { get; set; }
     }
 }

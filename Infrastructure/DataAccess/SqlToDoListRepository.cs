@@ -33,19 +33,19 @@ namespace bot.Infrastructure.DataAccess
         async Task<ToDoList> IToDoListRepository.GetAsync(Guid id, CancellationToken ct)
         {
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
-            ToDoListModel model = await dbContext.ToDoList.FirstOrDefaultAsync(m => m.Id == id, ct);
+            ToDoListModel model = await dbContext.ToDoList
+                .LoadWith(m => m.ToDoUser)
+                .FirstOrDefaultAsync(m => m.Id == id, ct);
             return ModelMapper.MapFromModel(model);
         }
         async Task<IReadOnlyList<ToDoList>> IToDoListRepository.GetByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            List<ToDoList> res = [];
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
-            List<ToDoListModel> models = [.. dbContext.ToDoList.Where(m => m.IdToDoUser == userId)];
-            foreach (ToDoListModel model in models)
-            {
-                res.Add(ModelMapper.MapFromModel(model));
-            }
-            return (IReadOnlyList<ToDoList>)res;
+            return await dbContext.ToDoList
+                .Where(m => m.IdToDoUser == userId)
+                .LoadWith(m => m.ToDoUser)
+                .Select(m => ModelMapper.MapFromModel(m)) 
+                .ToListAsync(ct);
         }
     }
 }

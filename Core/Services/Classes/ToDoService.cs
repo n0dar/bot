@@ -22,13 +22,18 @@ namespace bot.Core.Services.Classes
             if (countActive == _taskCountLimit) throw new TaskCountLimitException(_taskCountLimit);
             if (name.Length > _taskLengthLimit) throw new TaskLengthLimitException(name.Length, _taskLengthLimit);
             if (await toDoRepository.ExistsByNameAsync(user.UserId, name, ct)) throw new DuplicateTaskException(name);
-            ToDoItem ToDoItem = new();
-            ToDoItem.User = user;
-            ToDoItem.Name = name;
-            ToDoItem.Deadline = deadline;
-            ToDoItem.List = list;
-            await toDoRepository.AddAsync(ToDoItem, ct);
-            return ToDoItem;
+            ToDoItem toDoItem = new ToDoItem
+            {
+                Id = Guid.NewGuid(),
+                User = user,
+                Name = name,
+                CreatedAt = DateTime.Now,
+                State = ToDoItemState.Active,
+                Deadline = deadline,
+                List = list,
+            };
+            await toDoRepository.AddAsync(toDoItem, ct);
+            return toDoItem;
         }
         public async Task DeleteAsync(Guid id, CancellationToken ct)
         {
@@ -36,7 +41,8 @@ namespace bot.Core.Services.Classes
         }
         public async Task<IReadOnlyList<ToDoItem>> FindAsync(ToDoUser user, string namePrefix, CancellationToken ct)
         {
-            return await toDoRepository.FindAsync(user.UserId, x => x.Name.StartsWith(namePrefix), ct);
+            //return await toDoRepository.FindAsync(user.UserId, x => x.Name.StartsWith(namePrefix), ct);
+            throw new NotImplementedException();
         }
         public async Task<IReadOnlyList<ToDoItem>?> GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
         {
@@ -57,11 +63,6 @@ namespace bot.Core.Services.Classes
             }
             else throw new TaskDoesNotExistException("Активная задача с таким GUID не существует");
         }
-        //public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndListAsync(Guid userId, Guid? listId, CancellationToken ct)
-        //{
-        //    IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);
-        //    return [.. toDoItems.Where(toDoItem => toDoItem.List?.Id == listId)];
-        //}
         public async Task<IReadOnlyList<ToDoItem>?> GetByUserIdAndListAsync(Guid userId, Guid? listId, ToDoItemState? toDoItemState, CancellationToken ct)
         {
             IReadOnlyList<ToDoItem> toDoItems = await GetAllByUserIdAsync(userId, ct);

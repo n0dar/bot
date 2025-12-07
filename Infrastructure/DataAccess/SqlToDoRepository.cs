@@ -36,40 +36,52 @@ namespace bot.Infrastructure.DataAccess
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
             return await dbContext.ToDoItem.AnyAsync(m => m.IdToDoUser == userId && m.Name == name, ct);
         }
-        async Task<IReadOnlyList<ToDoItem>> IToDoRepository.FindAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct)
-        {
-            return await GetItemsAsync(userId, predicate, ct);
-        }
         async Task<IReadOnlyList<ToDoItem>> IToDoRepository.GetActiveByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return await GetItemsAsync(userId, item => item.State == ToDoItemState.Active, ct);
+            using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
+            List<ToDoItemModel> models = await dbContext.ToDoItem
+                .LoadWith(m => m.ToDoUser)
+                .LoadWith(m => m.ToDoList)
+                .ThenLoad(m => m.ToDoUser)
+                .Where(m => m.IdToDoUser == userId && m.State == ToDoItemState.Active)
+                .ToListAsync(ct);
+
+            List<ToDoItem> res = models
+                .Select(ModelMapper.MapFromModel)
+                .ToList();
+
+            return (IReadOnlyList<ToDoItem>)res;
         }
         async Task<IReadOnlyList<ToDoItem>> IToDoRepository.GetAllByUserIdAsync(Guid userId, CancellationToken ct)
         {
-            return await GetItemsAsync(userId, item => true, ct);
+            using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
+            List<ToDoItemModel> models = await dbContext.ToDoItem
+                .LoadWith(m => m.ToDoUser)
+                .LoadWith(m => m.ToDoList)
+                .ThenLoad(m => m.ToDoUser)
+                .Where(m => m.IdToDoUser == userId)
+                .ToListAsync(ct);
+
+            List<ToDoItem> res = models
+                .Select(ModelMapper.MapFromModel)  
+                .ToList();
+
+            return (IReadOnlyList<ToDoItem>)res;
         }
         async Task<ToDoItem> IToDoRepository.GetAsync(Guid id, CancellationToken ct)
         {
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
-            ToDoItemModel model = await dbContext.ToDoItem.FirstOrDefaultAsync(m => m.Id == id, ct);
+            ToDoItemModel model = await dbContext.ToDoItem
+                .LoadWith(i => i.ToDoUser)
+                .LoadWith(i => i.ToDoList)
+                .ThenLoad(i => i.ToDoUser)
+                .FirstOrDefaultAsync(m => m.Id == id, ct);
             return ModelMapper.MapFromModel(model);
         }
         async Task IToDoRepository.UpdateAsync(ToDoItem item, CancellationToken ct)
         {
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
             await dbContext.UpdateAsync<ToDoItemModel>(ModelMapper.MapToModel(item), token: ct);
-        }
-        private async Task<IReadOnlyList<ToDoItem>> GetItemsAsync(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken ct)
-        {
-            List<ToDoItem> res = [];
-            using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
-            List<ToDoItemModel> models = [.. dbContext.ToDoItem.Where(m => m.IdToDoUser == userId)];
-            foreach (ToDoItemModel model in models)
-            {
-                ToDoItem toDoItem = ModelMapper.MapFromModel(model);
-                if (predicate(toDoItem)) res.Add(toDoItem);
-            }
-            return (IReadOnlyList<ToDoItem>)res;
         }
     }
 }

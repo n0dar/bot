@@ -22,11 +22,12 @@ namespace bot.Infrastructure.DataAccess
             ToDoUserModel model = await dbContext.ToDoUser.FirstOrDefaultAsync(m => m.Id == userId, ct);
             return ModelMapper.MapFromModel(model);
         }
-        async Task<ToDoUser> IUserRepository.GetUserByTelegramUserIdAsync(long telegramUserId, CancellationToken ct)
+        async Task<ToDoUser?> IUserRepository.GetUserByTelegramUserIdAsync(long telegramUserId, CancellationToken ct)
         {
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
             ToDoUserModel model = await dbContext.ToDoUser.FirstOrDefaultAsync(m => m.TelegramUserId == telegramUserId, ct);
-            return ModelMapper.MapFromModel(model);
+            if (model == null) return null;
+            else return ModelMapper.MapFromModel(model);
         }
     }
 }

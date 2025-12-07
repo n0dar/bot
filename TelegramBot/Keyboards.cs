@@ -129,12 +129,14 @@ namespace bot.TelegramBot
             }
 
             if (navigationKeybordButtons.Count > 0) pagedButtonsKeyboard.AddNewRow(navigationKeybordButtons.ToArray());
-
-
-            pagedButtonsKeyboard.AddNewRow
-            ([
-                InlineKeyboardButton.WithCallbackData("☑️Посмотреть выполненные", new PagedListCallbackDto { Action = "show_completed", ToDoListId = listDto.ToDoListId, Page = 0 }.ToString())
-            ]);
+            
+            if (listDto.Action != "show_completed")
+            { 
+                pagedButtonsKeyboard.AddNewRow
+                ([
+                    InlineKeyboardButton.WithCallbackData("☑️Посмотреть выполненные", new PagedListCallbackDto { Action = "show_completed", ToDoListId = listDto.ToDoListId, Page = 0 }.ToString())
+                ]);
+            }
 
             return pagedButtonsKeyboard;
         }

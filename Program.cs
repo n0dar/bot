@@ -19,6 +19,7 @@ namespace bot
             try
             {
                 TelegramBotClient botClient = new(Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User));
+                string connectionString = new(Environment.GetEnvironmentVariable("TELEGRAM_BOT_CS", EnvironmentVariableTarget.User));
 
                 BotCommand[] commands =
                 [
@@ -31,8 +32,7 @@ namespace bot
 
                 await botClient.SetMyCommands(commands);
 
-                //DataContextFactory dataContextFactory = new("Host=localhost;Port=5432;Database=ToDoList;Username=postgres;Password=81828516;Pooling=true");
-                DataContextFactory dataContextFactory = new("");
+                DataContextFactory dataContextFactory = new(connectionString);
 
                 SqlUserRepository sqlUserRepository = new(dataContextFactory);
                 UserService userService = new(sqlUserRepository);

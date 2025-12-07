@@ -16,9 +16,14 @@ namespace bot.Core.Services.Classes
         {
             if (name.Length > _toDoListLengthLimit) throw new ToDoListLengthLimitException(name.Length, _toDoListLengthLimit);
             if (await toDoListRepository.ExistsByNameAsync(user.UserId, name, ct)) throw new DuplicateToDoListException(name);
-            ToDoList toDoList = new();
-            toDoList.Name = name;
-            toDoList.User = user;
+            ToDoList toDoList = new ToDoList
+            {
+                Id = Guid.NewGuid(),
+                Name = name,
+                User = user,
+                CreatedAt = DateTime.Now,
+                
+            };
             await toDoListRepository.AddAsync(toDoList, ct);
             return toDoList;
         }

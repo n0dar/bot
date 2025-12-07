@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "bot": {
+      "commandName": "Project",
+      "remoteDebugEnabled": false
+    }
+  }
+}
