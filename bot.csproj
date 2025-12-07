@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Remove="Infrastructure\DataAccess\FileToDoListRepository.cs" />
     <Compile Remove="Infrastructure\DataAccess\FileToDoRepository.cs" />
+    <Compile Remove="Infrastructure\DataAccess\FileUserRepository.cs" />
     <Compile Remove="Infrastructure\DataAccess\InMemoryToDoRepository.cs" />
     <Compile Remove="Infrastructure\DataAccess\InMemoryUserRepository.cs" />
     <Compile Remove="TelegramBot\DTO\CallbackDto_.cs" />

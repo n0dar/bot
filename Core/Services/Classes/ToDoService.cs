@@ -22,7 +22,11 @@ namespace bot.Core.Services.Classes
             if (countActive == _taskCountLimit) throw new TaskCountLimitException(_taskCountLimit);
             if (name.Length > _taskLengthLimit) throw new TaskLengthLimitException(name.Length, _taskLengthLimit);
             if (await toDoRepository.ExistsByNameAsync(user.UserId, name, ct)) throw new DuplicateTaskException(name);
-            ToDoItem ToDoItem = new(user, name, deadline, list);
+            ToDoItem ToDoItem = new();
+            ToDoItem.User = user;
+            ToDoItem.Name = name;
+            ToDoItem.Deadline = deadline;
+            ToDoItem.List = list;
             await toDoRepository.AddAsync(ToDoItem, ct);
             return ToDoItem;
         }

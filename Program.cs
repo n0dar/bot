@@ -34,8 +34,8 @@ namespace bot
                 //DataContextFactory dataContextFactory = new("Host=localhost;Port=5432;Database=ToDoList;Username=postgres;Password=81828516;Pooling=true");
                 DataContextFactory dataContextFactory = new("");
 
-                FileUserRepository fileUserRepository = new("UserRepository");
-                UserService userService = new(fileUserRepository);
+                SqlUserRepository sqlUserRepository = new(dataContextFactory);
+                UserService userService = new(sqlUserRepository);
 
                 SqlToDoRepository sqlToDoRepository = new(dataContextFactory);
                 ToDoService toDoService = new(sqlToDoRepository);
