@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,5 +13,6 @@ namespace bot.TelegramBot.Scenarios
         Task SetContext(long userId, ScenarioContext context, CancellationToken ct);
         //Сбросить (очистить) контекст пользователя
         Task ResetContext(long userId, CancellationToken ct);
+        Task<IReadOnlyList<ScenarioContext>> GetContexts(CancellationToken ct);
     }
 }

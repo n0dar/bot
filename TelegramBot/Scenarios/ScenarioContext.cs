@@ -1,4 +1,5 @@
 ﻿#nullable enable
+using System;
 using System.Collections.Generic;
 
 namespace bot.TelegramBot.Scenarios
@@ -20,5 +21,6 @@ namespace bot.TelegramBot.Scenarios
         public string? CurrentStep {  get; set; }
         //Дополнительная инфрмация, необходимая для работы сценария
         public Dictionary<string, object> Data {  get; set; } = [];
+        public DateTime CreatedAt { get; private set; } = DateTime.Now;
     }
 }
