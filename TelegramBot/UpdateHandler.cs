@@ -9,13 +9,11 @@ using bot.TelegramBot.Scenarios;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.ReplyMarkups;
 using static bot.Core.Entities.ToDoItem;
 
 namespace bot
@@ -69,20 +67,6 @@ namespace bot
         {
             OnHandleUpdateCompleted?.Invoke(message);
         }
-        private static string GetMessageForShowCommands(IReadOnlyList<ToDoItem> toDoItemList, string command)
-        {
-            StringBuilder message = new();
-            if (toDoItemList.Count > 0)
-            {
-                message.AppendLine($"Список{(command == "/show" ? " активных " : " ")}задач:");
-                foreach (ToDoItem item in toDoItemList)
-                {
-                    message.AppendLine(item.ToString());
-                }
-            }
-            else message.AppendLine($"Список{(command == "/show" ? " активных " : " ")}задач пуст"); 
-            return message.ToString();
-        }
         private async Task Start(Update update)
         {
             if (await _userService.GetUserAsync(update.Message.From.Id, _ct) == null)
@@ -116,7 +100,7 @@ namespace bot
                             PagedListCallbackDto pagedListCallbackDto = PagedListCallbackDto.FromString(update.CallbackQuery.Data);
                             IReadOnlyList<ToDoItem>? toDoItems = await ((ToDoService)_toDoService).GetByUserIdAndListAsync(toDoUser.UserId, pagedListCallbackDto.ToDoListId, ToDoItemState.Active, ct);
                             await _botClient.EditMessageText(update.CallbackQuery.Message.Chat.Id, update.CallbackQuery.Message.Id, $"Активные задачи списка '{(await _toDoListService.GetAsync((Guid)pagedListCallbackDto.ToDoListId, ct)).Name}'", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.PagedButtonsKeyboard(toDoItems, pagedListCallbackDto), cancellationToken: ct);
-                        }                            
+                        }
                         break;
                     case "show_completed":
                         if (scenarioContext == null)
@@ -225,19 +209,11 @@ namespace bot
         {
             RaiseHandleUpdateStarted(update.Message.Text);
             string command = update.Message.Text.Trim();
-            string? commandParam = null;
-            int spaceIndex = command.IndexOf(' ');
-            if (spaceIndex >= 0 && spaceIndex < command.Length - 1)
-            {
-                commandParam = command[(spaceIndex + 1)..].Trim();
-                command = command[..spaceIndex];
-            }
             ScenarioContext? scenarioContext = await ContextRepository.GetContext(update.Message.From.Id, cancellationToken);
             if (scenarioContext != null && command != "/cancel" && command != "/show" && command != "/addtask" && command != "/report") await ProcessScenario(scenarioContext, update, cancellationToken);
             else
             {
                 ToDoUser? toDoUser = await _userService.GetUserAsync(update.Message.From.Id, _ct);
-                Guid taskId;
 
                 switch (command)
                 {
@@ -250,9 +226,6 @@ namespace bot
                         break;
                     case "/show" when toDoUser != null:
                         await _botClient.SendMessage(update.Message.Chat.Id, "Выберите список", Telegram.Bot.Types.Enums.ParseMode.None, replyMarkup: Keyboards.ShowToDoListKeyboard(await _toDoListService.GetUserListsAsync(toDoUser.UserId, cancellationToken)), cancellationToken: cancellationToken);
-                        break;
-                    case "/find" when toDoUser != null && commandParam != null:
-                        await _botClient.SendMessage(update.Message.Chat.Id, GetMessageForShowCommands(await _toDoService.FindAsync(toDoUser, commandParam, cancellationToken), "/show"), Telegram.Bot.Types.Enums.ParseMode.None, cancellationToken: cancellationToken);
                         break;
                     case "/report" when toDoUser != null:
                         await Report(update);

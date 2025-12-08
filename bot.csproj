@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Infrastructure\DataAccess\FileToDoListRepository.cs" />
+    <Compile Remove="Infrastructure\DataAccess\FileToDoRepository.cs" />
+    <Compile Remove="Infrastructure\DataAccess\FileUserRepository.cs" />
     <Compile Remove="Infrastructure\DataAccess\InMemoryToDoRepository.cs" />
     <Compile Remove="Infrastructure\DataAccess\InMemoryUserRepository.cs" />
     <Compile Remove="TelegramBot\DTO\CallbackDto_.cs" />
@@ -13,6 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="linq2db" Version="6.0.0" />
+    <PackageReference Include="linq2db.PostgreSQL" Version="6.0.0" />
+    <PackageReference Include="Npgsql" Version="10.0.0" />
     <PackageReference Include="Telegram.Bot" Version="22.7.2" />
   </ItemGroup>
 

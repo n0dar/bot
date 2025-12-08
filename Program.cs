@@ -19,6 +19,7 @@ namespace bot
             try
             {
                 TelegramBotClient botClient = new(Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User));
+                string connectionString = new(Environment.GetEnvironmentVariable("TELEGRAM_BOT_CS", EnvironmentVariableTarget.User));
 
                 BotCommand[] commands =
                 [
@@ -31,15 +32,17 @@ namespace bot
 
                 await botClient.SetMyCommands(commands);
 
-                FileUserRepository fileUserRepository = new("UserRepository");
-                UserService userService = new(fileUserRepository);
+                DataContextFactory dataContextFactory = new(connectionString);
 
-                FileToDoRepository fileToDoRepository = new("ToDoRepository");
-                ToDoService toDoService = new(fileToDoRepository);
-                ToDoReportService toDoReportService = new(fileToDoRepository);
+                SqlUserRepository sqlUserRepository = new(dataContextFactory);
+                UserService userService = new(sqlUserRepository);
 
-                FileToDoListRepository fileToListDoRepository = new("ToDoListRepository");
-                ToDoListService toDoListService = new(fileToListDoRepository);
+                SqlToDoRepository sqlToDoRepository = new(dataContextFactory);
+                ToDoService toDoService = new(sqlToDoRepository);
+                ToDoReportService toDoReportService = new(sqlToDoRepository);
+
+                SqlToDoListRepository sqlToListDoRepository = new(dataContextFactory);
+                ToDoListService toDoListService = new(sqlToListDoRepository);
 
                 IEnumerable<IScenario> scenerios =
                 [
