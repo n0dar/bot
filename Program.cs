@@ -1,4 +1,5 @@
-﻿using bot.Core.Services.Classes;
+﻿using bot.BackgroundTasks;
+using bot.Core.Services.Classes;
 using bot.Infrastructure.DataAccess;
 using bot.TelegramBot.Scenarios;
 using System;
@@ -69,6 +70,12 @@ namespace bot
                         AllowedUpdates = [UpdateType.Message, UpdateType.CallbackQuery],
                         DropPendingUpdates = true
                     };
+
+                    BackgroundTaskRunner backgroundTaskRunner = new();
+                    ResetScenarioBackgroundTask resetScenarioBackgroundTask = new(TimeSpan.FromMinutes(3), contextRepository, botClient);
+                    backgroundTaskRunner.AddTask(resetScenarioBackgroundTask);
+                    backgroundTaskRunner.StartTasks(cts.Token);
+
                     botClient.StartReceiving(updateHandler, receiverOptions);
                     var me = await botClient.GetMe();
                     Console.WriteLine($"{me.FirstName} запущен!");
@@ -80,6 +87,7 @@ namespace bot
                         keyInfo = Console.ReadKey(intercept: true);
                         if (keyInfo.Key == ConsoleKey.A)
                         {
+                            backgroundTaskRunner.StopTasks(cts.Token);
                             cts.Cancel();
                             break;
                         }   

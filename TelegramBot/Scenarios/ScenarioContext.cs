@@ -15,7 +15,7 @@ namespace bot.TelegramBot.Scenarios
     public class ScenarioContext(ScenarioType scenario)
     {
         //Id пользователя в Telegram
-        long UserId { get; set; }
+        public long UserId { get; set; }
         public ScenarioType CurrentScenario { get; set; } = scenario;
         //Текущий шаг сценария
         public string? CurrentStep {  get; set; }

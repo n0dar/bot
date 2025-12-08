@@ -11,7 +11,7 @@ namespace bot.TelegramBot.Scenarios
         private readonly ConcurrentDictionary<long, ScenarioContext> _contextRepository = [];
         Task<IReadOnlyList<ScenarioContext>> IScenarioContextRepository.GetContexts(CancellationToken ct)
         {
-            return Task.FromResult((IReadOnlyList<ScenarioContext>)_contextRepository.Select(s => s.Value));
+            return Task.FromResult((IReadOnlyList<ScenarioContext>)_contextRepository.Select(s => s.Value).ToList());
         }
         Task<ScenarioContext> IScenarioContextRepository.GetContext(long userId, CancellationToken ct)
         {
