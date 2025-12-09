@@ -1,4 +1,5 @@
 ﻿
+using bot.Core.DataAccess.Models;
 using bot.Core.Entities;
 using bot.Core.Services.Interfaces;
 using bot.Infrastructure.DataAccess;
@@ -42,25 +43,29 @@ namespace bot.Infrastructure
             notification.IsNotified = true;
             notification.NotifiedAt = DateTime.Now;
 
-            await dbContext.UpdateAsync(notification, token: ct);
+            await dbContext.UpdateAsync<Notification>(notification, token: ct);
         }
         public async Task<bool> ScheduleNotification(Guid userId, string type, string text, DateTime scheduledAt, CancellationToken ct)
         {
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
+
+            ToDoUserModel model = await dbContext.ToDoUser.FirstOrDefaultAsync(m => m.Id == userId, ct);
+
+
 
             if (!await dbContext.Notifications.AnyAsync(n => n.IdToDoUser == userId && n.Type == type, ct))
             {
                 Notification notification = new()
                 {
                     Id = Guid.NewGuid(),
-                    IdToDoUser = userId,
+                    User = ModelMapper.MapFromModel(model),
                     Type = type,
                     Text = text,
                     ScheduledAt = scheduledAt,
                     IsNotified = false,
                 };
 
-                await dbContext.InsertAsync(notification, token: ct);
+                await dbContext.InsertAsync<Notification>(notification, token: ct);
 
                 return true;
             }

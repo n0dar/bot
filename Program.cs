@@ -1,5 +1,6 @@
 ﻿using bot.BackgroundTasks;
 using bot.Core.Services.Classes;
+using bot.Infrastructure;
 using bot.Infrastructure.DataAccess;
 using bot.TelegramBot.Scenarios;
 using System;
@@ -72,8 +73,14 @@ namespace bot
                     };
 
                     BackgroundTaskRunner backgroundTaskRunner = new();
+                    
                     ResetScenarioBackgroundTask resetScenarioBackgroundTask = new(TimeSpan.FromMinutes(3), contextRepository, botClient);
                     backgroundTaskRunner.AddTask(resetScenarioBackgroundTask);
+
+                    NotificationService notificationService = new(dataContextFactory);
+                    NotificationBackgroundTask notificationBackgroundTask = new(notificationService, botClient);
+                    backgroundTaskRunner.AddTask(notificationBackgroundTask);
+
                     backgroundTaskRunner.StartTasks(cts.Token);
 
                     botClient.StartReceiving(updateHandler, receiverOptions);

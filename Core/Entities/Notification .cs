@@ -5,7 +5,7 @@ namespace bot.Core.Entities
     public class Notification
     {
         public Guid Id { get; set; }
-        public Guid IdToDoUser { get; set; }
+        public ToDoUser User { get; set; }
         public string Type { get; set; }//Тип нотификации. Например: DeadLine_{ToDoItem.Id}, Today_{DateOnly.FromDateTime(DateTime.UtcNow)}
         public string Text { get; set; }//Текст, который будет отправлен
         public DateTime ScheduledAt { get; set; }//Запланированная дата отправки
