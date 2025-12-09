@@ -14,6 +14,22 @@ namespace bot.Infrastructure.DataAccess
 {
     internal class SqlToDoRepository(IDataContextFactory<ToDoDataContext> dataContextFactory) : IToDoRepository
     {
+        public async Task<IReadOnlyList<ToDoItem>> GetActiveWithTodayDeadline(Guid userId, CancellationToken ct)
+        {
+            using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
+            List<ToDoItemModel> models = await dbContext.ToDoItem
+                .LoadWith(m => m.ToDoUser)
+                .LoadWith(m => m.ToDoList)
+                .ThenLoad(m => m.ToDoUser)
+                .Where(m => m.IdToDoUser == userId && m.State == ToDoItemState.Active && m.Deadline == DateOnly.FromDateTime(DateTime.Now))
+                .ToListAsync(ct);
+
+            List<ToDoItem> res = models
+                .Select(ModelMapper.MapFromModel)
+                .ToList();
+
+            return (IReadOnlyList<ToDoItem>)res;
+        }
         public async Task<IReadOnlyList<ToDoItem>> GetActiveWithDeadline(Guid userId, DateTime from, DateTime to, CancellationToken ct)
         {
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();

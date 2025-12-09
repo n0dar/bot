@@ -21,5 +21,6 @@ namespace bot.Core.DataAccess
         //Возвращает количество активных задач у пользователя
         Task<int> CountActiveAsync(Guid userId, CancellationToken ct);
         Task<IReadOnlyList<ToDoItem>> GetActiveWithDeadline(Guid userId, DateTime from, DateTime to, CancellationToken ct);
+        Task<IReadOnlyList<ToDoItem>> GetActiveWithTodayDeadline(Guid userId, CancellationToken ct);
     }
 }

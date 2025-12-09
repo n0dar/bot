@@ -72,7 +72,6 @@ namespace bot
                         DropPendingUpdates = true
                     };
 
-
                     NotificationService notificationService = new(dataContextFactory);
                     
                     BackgroundTaskRunner backgroundTaskRunner = new();
@@ -85,6 +84,9 @@ namespace bot
 
                     DeadlineBackgroundTask deadlineBackgroundTask = new(notificationService, sqlUserRepository, sqlToDoRepository);
                     backgroundTaskRunner.AddTask(deadlineBackgroundTask);
+
+                    TodayBackgroundTask todayBackgroundTask = new(notificationService, sqlUserRepository, sqlToDoRepository);
+                    backgroundTaskRunner.AddTask(todayBackgroundTask);
 
                     backgroundTaskRunner.StartTasks(cts.Token);
 
