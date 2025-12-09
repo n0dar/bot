@@ -72,14 +72,19 @@ namespace bot
                         DropPendingUpdates = true
                     };
 
+
+                    NotificationService notificationService = new(dataContextFactory);
+                    
                     BackgroundTaskRunner backgroundTaskRunner = new();
                     
                     ResetScenarioBackgroundTask resetScenarioBackgroundTask = new(TimeSpan.FromMinutes(3), contextRepository, botClient);
                     backgroundTaskRunner.AddTask(resetScenarioBackgroundTask);
-
-                    NotificationService notificationService = new(dataContextFactory);
+                    
                     NotificationBackgroundTask notificationBackgroundTask = new(notificationService, botClient);
                     backgroundTaskRunner.AddTask(notificationBackgroundTask);
+
+                    DeadlineBackgroundTask deadlineBackgroundTask = new(notificationService, sqlUserRepository, sqlToDoRepository);
+                    backgroundTaskRunner.AddTask(deadlineBackgroundTask);
 
                     backgroundTaskRunner.StartTasks(cts.Token);
 

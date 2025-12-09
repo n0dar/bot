@@ -1,7 +1,6 @@
 ﻿using bot.Core.DataAccess.Models;
 using bot.Core.Entities;
 using bot.Infrastructure.DataAccess.Models;
-using System;
 
 namespace bot.Infrastructure.DataAccess
 {

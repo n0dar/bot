@@ -21,8 +21,9 @@ namespace bot.Infrastructure
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
 
             List<NotificationModel> notificationModels = await dbContext.Notifications
-                 .Where(n => !n.IsNotified && n.ScheduledAt <= scheduledBefore)
-                 .ToListAsync(ct);
+                .LoadWith(m => m.ToDoUser)
+                .Where(n => !n.IsNotified && n.ScheduledAt <= scheduledBefore)
+                .ToListAsync(ct);
 
             IReadOnlyList<Notification> notifications = notificationModels
                   .Select(ModelMapper.MapFromModel)
@@ -38,12 +39,10 @@ namespace bot.Infrastructure
             NotificationModel notificationModel = await dbContext.Notifications
                 .FirstOrDefaultAsync(n=>n.Id == notificationId, ct);
 
-            Notification notification = ModelMapper.MapFromModel(notificationModel);
+            notificationModel.IsNotified = true;
+            notificationModel.NotifiedAt = DateTime.Now;
 
-            notification.IsNotified = true;
-            notification.NotifiedAt = DateTime.Now;
-
-            await dbContext.UpdateAsync<Notification>(notification, token: ct);
+            await dbContext.UpdateAsync<NotificationModel>(notificationModel, token: ct);
         }
         public async Task<bool> ScheduleNotification(Guid userId, string type, string text, DateTime scheduledAt, CancellationToken ct)
         {
@@ -51,21 +50,19 @@ namespace bot.Infrastructure
 
             ToDoUserModel model = await dbContext.ToDoUser.FirstOrDefaultAsync(m => m.Id == userId, ct);
 
-
-
             if (!await dbContext.Notifications.AnyAsync(n => n.IdToDoUser == userId && n.Type == type, ct))
             {
-                Notification notification = new()
+                NotificationModel notificationModel = new()
                 {
                     Id = Guid.NewGuid(),
-                    User = ModelMapper.MapFromModel(model),
+                    IdToDoUser = userId,//ModelMapper.MapFromModel(model),
                     Type = type,
                     Text = text,
                     ScheduledAt = scheduledAt,
                     IsNotified = false,
                 };
 
-                await dbContext.InsertAsync<Notification>(notification, token: ct);
+                await dbContext.InsertAsync<NotificationModel>(notificationModel, token: ct);
 
                 return true;
             }

@@ -12,7 +12,7 @@ namespace bot.BackgroundTasks
     {
         protected async override Task Execute(CancellationToken ct)
         {
-            IReadOnlyList<Notification> notifications = await notificationService.GetScheduledNotification(DateTime.UtcNow, ct);
+            IReadOnlyList<Notification> notifications = await notificationService.GetScheduledNotification(DateTime.Now, ct);
 
             foreach (Notification n in notifications)
             {
