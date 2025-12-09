@@ -1,5 +1,6 @@
 ﻿using bot.Core.DataAccess.Models;
 using bot.Core.Entities;
+using bot.Infrastructure.DataAccess.Models;
 using System;
 
 namespace bot.Infrastructure.DataAccess
@@ -61,6 +62,7 @@ namespace bot.Infrastructure.DataAccess
                 List = MapFromModel(model.ToDoList)
             };
         }
+
         public static ToDoItemModel MapToModel(ToDoItem entity)
         {
             return new ToDoItemModel
@@ -77,5 +79,33 @@ namespace bot.Infrastructure.DataAccess
                 ToDoList = MapToModel(entity.List)
             };
         }
+
+        public static NotificationModel MapToModel(Notification entity)
+        {
+            return new NotificationModel
+            {
+                Id = entity.Id,
+                IdToDoUser = entity.User.UserId,
+                Type = entity.Type,
+                Text = entity.Text,
+                ScheduledAt = entity.ScheduledAt,
+                IsNotified = entity.IsNotified,
+                NotifiedAt = entity.NotifiedAt
+            };
+        }
+        public static Notification MapFromModel(NotificationModel model)
+        {
+            return new Notification
+            {
+                Id = model.Id,
+                User = MapFromModel(model.ToDoUser),
+                Type = model.Type,
+                Text = model.Text,
+                ScheduledAt = model.ScheduledAt,
+                IsNotified = model.IsNotified,
+                NotifiedAt = model.NotifiedAt
+            };
+        }
+
     }
 }
