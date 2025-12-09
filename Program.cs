@@ -1,5 +1,6 @@
 ﻿using bot.BackgroundTasks;
 using bot.Core.Services.Classes;
+using bot.Infrastructure;
 using bot.Infrastructure.DataAccess;
 using bot.TelegramBot.Scenarios;
 using System;
@@ -71,9 +72,22 @@ namespace bot
                         DropPendingUpdates = true
                     };
 
+                    NotificationService notificationService = new(dataContextFactory);
+                    
                     BackgroundTaskRunner backgroundTaskRunner = new();
+                    
                     ResetScenarioBackgroundTask resetScenarioBackgroundTask = new(TimeSpan.FromMinutes(3), contextRepository, botClient);
                     backgroundTaskRunner.AddTask(resetScenarioBackgroundTask);
+                    
+                    NotificationBackgroundTask notificationBackgroundTask = new(notificationService, botClient);
+                    backgroundTaskRunner.AddTask(notificationBackgroundTask);
+
+                    DeadlineBackgroundTask deadlineBackgroundTask = new(notificationService, sqlUserRepository, sqlToDoRepository);
+                    backgroundTaskRunner.AddTask(deadlineBackgroundTask);
+
+                    TodayBackgroundTask todayBackgroundTask = new(notificationService, sqlUserRepository, sqlToDoRepository);
+                    backgroundTaskRunner.AddTask(todayBackgroundTask);
+
                     backgroundTaskRunner.StartTasks(cts.Token);
 
                     botClient.StartReceiving(updateHandler, receiverOptions);

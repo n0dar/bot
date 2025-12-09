@@ -58,7 +58,7 @@ namespace bot.Core.Services.Classes
             if (toDoItem != null)
             {
                 toDoItem.State = ToDoItemState.Completed;
-                toDoItem.StateChangedAt = DateTime.UtcNow;
+                toDoItem.StateChangedAt = DateTime.Now;
                 await toDoRepository.UpdateAsync(toDoItem, ct);
             }
             else throw new TaskDoesNotExistException("Активная задача с таким GUID не существует");

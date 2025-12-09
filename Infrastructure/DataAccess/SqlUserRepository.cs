@@ -4,13 +4,23 @@ using bot.Core.Entities;
 using LinqToDB;
 using LinqToDB.Async;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Telegram.Bot.Types;
 
 namespace bot.Infrastructure.DataAccess
 {
     internal class SqlUserRepository(IDataContextFactory<ToDoDataContext> dataContextFactory) : IUserRepository
     {
+        public async Task<IReadOnlyList<ToDoUser>> GetUsers(CancellationToken ct)
+        {
+            using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
+            List<ToDoUserModel> models = await dbContext.ToDoUser.ToListAsync(ct);
+
+            return models.Select(ModelMapper.MapFromModel).ToList();
+        }
         async Task IUserRepository.AddAsync(ToDoUser user, CancellationToken ct)
         {
             using ToDoDataContext dbContext = dataContextFactory.CreateDataContext();
